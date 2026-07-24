@@ -30,3 +30,6 @@ desktop.ini
 
 # Word source manuals remain available locally but are not published.
 Manual/*.docx
+
+# Legacy root manual remains local only.
+/KIOSK 1.4.6.pdf
