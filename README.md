@@ -1,238 +1,287 @@
 # Presentation Kiosk 1.4.7
 
-Presentation Kiosk ist ein lokales Alert- und Präsentationssystem für temporäre
-Veranstaltungen. Es kann Videos, Bilder, Slideshows und Video-Playlists anzeigen
-und über eine Remote-Oberfläche oder ein Elgato Stream Deck bedient werden.
+Ein lokales Alert- und Präsentationssystem für temporäre Events, spontane
+Organisationsformen und Ad-hoc-Krisenmanagement.
 
-## Systemvoraussetzungen
+Das System zeigt Videos, Bilder, Slideshows und Playlists auf einem
+Präsentationsbildschirm. Inhalte lassen sich zentral über eine einfache
+Weboberfläche oder optional über ein Elgato Stream Deck steuern. Änderungen
+werden in Echtzeit an alle verbundenen Clients übertragen.
 
-- Windows 10 oder Windows 11, 64 Bit
-- Administratorrechte für die Installation
-- Internetzugang während der Installation, sofern kein vollständiges
-  Offline-Paket vorbereitet wurde
-- Optional: kompatibles Elgato Stream Deck
+> Ziel des Projekts ist eine einfache, selbsterklärende und ortsunabhängige
+> Bedienung, die möglichst ohne vorherige Schulung funktioniert.
 
-Das System verwendet ausdrücklich **Python 3.12.6**. Neuere Python-Versionen
-sollen für dieses Projekt nicht verwendet werden, da der StreamDeck-Zusatz damit
-nicht zuverlässig funktioniert.
+## Installation und Start
 
-## Installation
+Die vollständige englische Installationsanleitung befindet sich unter
+[Installer/README.md](Installer/README.md).
 
-1. Den vollständigen Ordner `kiosk` nach `C:\kiosk` kopieren.
-2. `C:\kiosk\Installer\Install_Kiosk.cmd` per Doppelklick starten.
-3. Die Windows-Abfrage für Administratorrechte bestätigen.
-4. Warten, bis der Installer die erfolgreiche Installation meldet.
+Kurzfassung:
 
-Der Installer erledigt automatisch:
+1. Den Projektordner nach `C:\kiosk` kopieren.
+2. `Installer\Install_Kiosk.cmd` als Administrator starten.
+3. Nach abgeschlossener Installation `C:\kiosk\kiosk.bat` ausführen.
+4. Das automatisch geöffnete Firefox-Kioskfenster verwenden.
 
-- Installation von Python 3.12.6
-- Installation der Visual-C++-Laufzeit
-- Erstellung der Python-Umgebung `C:\kiosk\.venv`
-- Installation der festgeschriebenen Python-Paketversionen
-- Installation und Einrichtung von HIDAPI für das Stream Deck
-- Installation von Firefox
-- Firefox-Richtlinie für automatischen Videostart mit Ton
-- Erstellung der Startdatei `kiosk.bat`
-- Erstellung der Desktop-Verknüpfung **Firefox Kiosk**
-- abschließenden Python- und StreamDeck-Funktionstest
+Das Projekt verwendet ausdrücklich **Python 3.12.6** und festgeschriebene,
+getestete Paketversionen.
 
-Die dauerhafte PowerShell-Ausführungsrichtlinie wird dabei nicht verändert.
-`Install_Kiosk.cmd` startet nur den benötigten Installationsprozess mit einer
-temporären Ausnahme.
+## Oberflächen
 
-Das Installationsprotokoll befindet sich unter:
+### Präsentation
 
-```text
-C:\kiosk\Installer\Install_Kiosk.log
-```
+Die Präsentationsoberfläche läuft in Firefox im Vollbild-Kioskmodus. Sie
+empfängt Medienwechsel über Socket.IO und zeigt einzelne Bilder, Videos,
+Slideshows oder Playlists an.
 
-## Online- und Offline-Installation
+![Presentation output](docs/images/presentation.png)
 
-Fehlende Installationsdateien werden beim ersten Online-Lauf in diesem Ordner
-gespeichert:
+Lokale Adressen:
 
-```text
-C:\kiosk\Installer\Packages
-```
+- `http://localhost:53100/`
+- `http://localhost:53100/presentation`
+- `http://localhost:53100/presentation.html`
 
-Für eine Installation ohne Internet müssen dort die in
-`Installer\Packages\README.txt` beschriebenen Installationsdateien und
-Python-Wheels vorhanden sein.
+### Remote-Steuerung
 
-## Programm starten
+Die browserbasierte Remote-Oberfläche stellt die aktivierten Medien als
+übersichtliche Schaltflächen dar. Änderungen werden sofort auf der Präsentation
+ausgeführt. Für Slideshows und Videos wird eine Vorschau angezeigt.
 
-Das komplette System wird mit folgender Datei gestartet:
+![Remote control](docs/images/remote.png)
+
+Adresse:
 
 ```text
-C:\kiosk\kiosk.bat
+http://<KIOSK-IP>:53100/remote
 ```
 
-Dabei werden gestartet:
+Fehlende Medien werden gekennzeichnet und können nicht gestartet werden.
+Stattdessen erscheint eine Meldung mit dem erwarteten Datei- oder Ordnerpfad.
 
-1. der Kiosk-Server `app.py`,
-2. der StreamDeck-Treiber `app_streamdeck.py`,
-3. Firefox im privaten Vollbild-Kioskmodus.
+### Admin-Dashboard
 
-Alternativ öffnet die Desktop-Verknüpfung **Firefox Kiosk** ausdrücklich Firefox.
-Ein im Terminal angeklickter Weblink wird dagegen mit dem Windows-Standardbrowser
-geöffnet und sollte deshalb nicht zum Starten der Präsentation verwendet werden.
+Das Admin-Dashboard dient zur technischen Kontrolle und Konfiguration. Es zeigt
+unter anderem:
 
-## Bedienoberflächen
+- aktuell aktives Medium,
+- Verbindungsstatus von Präsentation und Remote,
+- Server-Heartbeat,
+- geplantes Standardmedium,
+- Button-Belegung,
+- StreamDeck-Sperrstatus.
 
-Auf dem Kiosk-Rechner:
+![Admin dashboard](docs/images/admin.png)
+
+Adresse:
 
 ```text
-Präsentation: http://localhost:53100/
-Präsentation: http://localhost:53100/presentation
-Remote:       http://localhost:53100/remote
-Admin:        http://localhost:53100/admin
+http://<KIOSK-IP>:53100/admin
 ```
 
-Remote und Admin können von einem anderen Gerät über die im Server-Terminal
-angezeigte IP-Adresse geöffnet werden, zum Beispiel:
+Fehlende Mediendateien und leere Medienordner werden im Admin-Panel farblich
+markiert. Beim Speichern wird die bisherige `button_config.json` automatisch
+unter `Backups` gesichert. Die letzten 20 Sicherungen bleiben erhalten.
+
+### Passwortschutz
+
+Remote- und Admin-Oberfläche sind standardmäßig durch Benutzername und Passwort
+geschützt. Die Zugangsdaten müssen vor einem produktiven Einsatz in `app.py`
+angepasst werden.
+
+![Password prompt](docs/images/password.png)
+
+## Systemarchitektur
+
+Das Kiosk-System ist modular aufgebaut:
 
 ```text
-http://192.168.1.20:53100/remote
-http://192.168.1.20:53100/admin
+Remote / Admin / Stream Deck
+             │
+             ▼
+      Flask + Socket.IO
+           app.py
+             │
+             ▼
+    Präsentationsbrowser
 ```
 
-Standardmäßig sind Remote und Admin passwortgeschützt. Benutzername und Passwort
-sind in `app.py` konfiguriert.
+### Server – `app.py`
 
-Die StreamDeck-API `/api` akzeptiert nur lokale Zugriffe vom Kiosk-Rechner. Das
-Stream Deck funktioniert dadurch weiterhin, externe Geräte können die API aber
-nicht direkt aufrufen.
+Der Python-Server ist das Herzstück des Systems:
 
-## Medienordner
+- stellt Präsentation, Remote und Admin bereit,
+- verwaltet das aktuell aktive Medium,
+- synchronisiert Clients in Echtzeit über Socket.IO,
+- überwacht Verbindungen per Heartbeat,
+- startet zu einer festgelegten Uhrzeit ein Standardmedium,
+- prüft, ob konfigurierte Medien vorhanden sind,
+- sichert Änderungen an der Button-Konfiguration.
 
-Alle Medien liegen unter `C:\kiosk\static`.
+Der Server lauscht standardmäßig auf Port `53100`.
 
-| Ordner | Inhalt |
+### Präsentationsoberfläche – `static/presentation.html`
+
+- läuft im Browser auf dem Präsentationsrechner,
+- startet und stoppt Bilder, Videos, Slideshows und Playlists,
+- zeigt beim Start kurz IP-Adresse und Port,
+- meldet den aktuellen Präsentationsstatus an den Server.
+
+### Remote-Oberfläche – `static/remote.html`
+
+- lädt aktivierte Buttons dynamisch aus `button_config.json`,
+- startet Medien über Socket.IO,
+- zeigt Vorschauen und den aktuellen Präsentationsstatus,
+- blockiert konfigurierte, aber fehlende Medien.
+
+### Admin-Oberfläche – `static/admin.html`
+
+- zeigt Server- und Clientstatus,
+- bearbeitet Button-Belegung, Beschriftung, Typ und Medienpfad,
+- markiert fehlende Medien,
+- sperrt oder entsperrt die StreamDeck-Bedienung.
+
+### StreamDeck-Treiber – `app_streamdeck.py`
+
+Der separate Python-Prozess bindet ein kompatibles Elgato Stream Deck ein:
+
+- liest die Belegung aus `button_config.json`,
+- rendert Beschriftung und Aktivstatus auf den Tasten,
+- sendet lokale API-Befehle an den Server,
+- verbindet sich nach einem Server- oder USB-Unterbruch automatisch neu,
+- bleibt beim Start standardmäßig für Eingaben gesperrt und dient zunächst als
+  Statusanzeige.
+
+## Kommunikation
+
+### Socket.IO
+
+Socket.IO übernimmt die Echtzeitkommunikation zwischen Server, Präsentation,
+Remote, Admin und StreamDeck-Treiber. Wichtige Ereignisse sind:
+
+- `show_media` – Medium wechseln,
+- `slideshow_image` – aktuelles Slideshow-Bild melden,
+- `heartbeat_request` / `heartbeat_response` – Verbindung prüfen,
+- `reload_config` – Button-Belegung neu laden,
+- `set_streamdeck_input_lock` – StreamDeck sperren oder freigeben.
+
+### Lokale HTTP-API
+
+Das Stream Deck verwendet:
+
+```text
+http://localhost:53100/api?Function=<FUNKTION>
+```
+
+Beispiele für Funktionen sind `video1`, `bild3`, `playlist` und `reset`.
+
+Die API akzeptiert aus Sicherheitsgründen nur Aufrufe vom lokalen
+Kiosk-Rechner (`127.0.0.1` oder `::1`). Externe Geräte können diese API nicht
+direkt verwenden.
+
+## Medien und Button-Belegung
+
+Alle Präsentationsmedien liegen unter `static`:
+
+| Pfad | Verwendung |
 |---|---|
-| `static\videos` | einzelne Videos, beispielsweise `video1.mp4` |
-| `static\videos_playlist` | Videos für die automatisch fortlaufende Playlist |
-| `static\bild1` bis `static\bild10` | Bilder für einzelne Alarm-Slideshows |
-| `static\Message Templates` | Vorlagen zur Erstellung neuer Alarmmeldungen |
+| `static/videos` | einzelne Videos |
+| `static/videos_playlist` | fortlaufende Video-Playlist |
+| `static/bild1` bis `static/bild10` | Bilder für Meldungen und Slideshows |
+| `static/Message Templates` | Vorlagen für neue Meldungsgrafiken |
 
-Neue Medien können vor Ort in die vorgesehenen Ordner kopiert werden. Im
-Admin-Panel werden fehlende Dateien oder leere Medienordner rot markiert. Ein
-fehlendes Medium kann in der Remote-Oberfläche nicht gestartet werden; stattdessen
-erscheint eine genaue Fehlermeldung.
+Die Datei `button_config.json` definiert:
 
-Die Belegung und Aktivierung der Bedienknöpfe wird in folgender Datei gespeichert:
+- ob ein Button aktiviert ist,
+- seine Beschriftung,
+- den Medientyp (`video`, `slideshow` oder `playlist`),
+- den zugehörigen Datei- oder Ordnerpfad.
 
-```text
-C:\kiosk\button_config.json
-```
+Medien können direkt vor Ort erstellt und in die vorbereiteten Ordner kopiert
+werden. Nur die für das jeweilige Event benötigten Einträge müssen im
+Admin-Panel aktiviert werden.
 
-Beim Speichern über das Admin-Panel wird die vorherige Version automatisch unter
-`C:\kiosk\Backups` gesichert. Es werden die letzten 20 Sicherungen aufbewahrt.
+## Scheduler
 
-## Erklärung der automatisch erzeugten Ordner
+Der Server kann täglich zu einer festgelegten Uhrzeit automatisch ein
+Standardmedium starten. Dies eignet sich beispielsweise dafür, nach einem Event
+oder einer Alarmmeldung wieder zum Sponsor- beziehungsweise Werbeloop
+zurückzukehren.
 
-### `.venv`
+Die Einstellungen `SCHEDULE_TIME` und `SCHEDULE_PROGRAM` befinden sich in
+`app.py`.
 
-```text
-C:\kiosk\.venv
-```
+## SDI-Ausgabe
 
-Dies ist die lokale Python-Umgebung des Kiosk-Programms. Sie enthält Python-
-Verknüpfungen und sämtliche benötigten Pakete in den geprüften Versionen.
+Falls eine SDI-Ausgabe benötigt wird, kann das HDMI-Signal des
+Präsentationsrechners über einen HDMI-zu-SDI-Wandler in eine bestehende
+Videoinfrastruktur eingespeist werden.
 
-- Der Ordner wird vom Installer automatisch erstellt.
-- Er darf nicht manuell bearbeitet werden.
-- Er muss nicht in ein Installationspaket aufgenommen werden.
-- Er sollte nicht zwischen verschiedenen Computern kopiert werden.
-- Bei einer Beschädigung kann `.venv` gelöscht und durch erneutes Ausführen von
-  `Installer\Install_Kiosk.cmd` neu erstellt werden.
+Typischer Ablauf unter Windows 11:
 
-### `.vs`
+1. Präsentationsrechner per HDMI mit dem HDMI-zu-SDI-Wandler verbinden.
+2. Unter **Anzeigeeinstellungen** den betreffenden HDMI-Ausgang auswählen.
+3. Als Auflösung beispielsweise `1920 × 1080` einstellen.
+4. Unter **Erweiterte Anzeige** die Adaptereigenschaften öffnen.
+5. Über **Alle Modi auflisten** nach Möglichkeit `1080i, 50 Hz` wählen.
 
-```text
-C:\kiosk\.vs
-```
+Welche Modi verfügbar sind, hängt von Grafikkarte und Treiber ab. Falls nur
+`1080p50` angeboten wird, ist für eine echte `1080i50`-Ausgabe ein geeigneter
+Cross-Converter erforderlich.
 
-Dieser Ordner stammt von Microsoft Visual Studio. Er enthält ausschließlich
-benutzerspezifische Entwicklungsdaten, Suchindizes und Fenster-Einstellungen.
+## Verwendete Technologien
 
-- Für den Betrieb des Kiosks wird er nicht benötigt.
-- Er muss nicht mit dem Softwarepaket ausgeliefert werden.
-- Er kann bei geschlossenem Visual Studio gefahrlos gelöscht werden.
-- Visual Studio erstellt ihn bei Bedarf automatisch neu.
+- Python 3.12.6
+- Flask
+- Flask-SocketIO
+- Socket.IO
+- Eventlet
+- psutil
+- Pillow
+- StreamDeck SDK
+- HIDAPI
+- HTML, CSS und JavaScript
+- Mozilla Firefox im Kioskmodus
 
-### `__pycache__`
+Die vollständigen geprüften Paketversionen stehen in
+`Installer/requirements.txt`.
 
-```text
-C:\kiosk\__pycache__
-```
-
-Python legt hier automatisch vorkompilierte Zwischendateien an, damit Module
-schneller geladen werden können.
-
-- Der Ordner gehört nicht zum eigentlichen Programm.
-- Er muss nicht mitgeliefert oder gesichert werden.
-- Er kann bei beendetem Kiosk gefahrlos gelöscht werden.
-- Python erstellt ihn beim nächsten Start automatisch neu.
-
-### `Backups`
+## Projektstruktur
 
 ```text
-C:\kiosk\Backups
+C:\kiosk
+├── app.py
+├── app_streamdeck.py
+├── button_config.json
+├── kiosk.bat
+├── Installer\
+├── Manual\
+├── static\
+├── docs\images\
+├── Backups\        # automatisch erzeugt
+├── .venv\          # automatisch erzeugt
+├── .vs\            # nur Visual-Studio-Daten
+└── __pycache__\    # automatisch erzeugter Python-Cache
 ```
 
-Dieser Ordner enthält automatisch erzeugte Sicherungen von
-`button_config.json`. Für eine vollständige Sicherung der vor Ort erstellten
-Konfiguration sollte dieser Ordner zusammen mit `button_config.json` und den
-Medienordnern kopiert werden.
+`.venv`, `.vs`, `__pycache__`, `Backups` und temporäre Dateien werden nicht im
+Git-Repository benötigt.
 
-### `Installer`
+## Sicherheitshinweise
 
-Enthält den gemeinsamen Installer, die festgeschriebenen Python-Paketversionen
-und optional die Dateien für eine Offline-Installation.
+- Standard-Zugangsdaten vor dem Einsatz ändern.
+- Remote und Admin nur in einem vertrauenswürdigen Produktionsnetz verwenden.
+- Die StreamDeck-API ist ausschließlich lokal erreichbar.
+- Die StreamDeck-Eingabe bleibt standardmäßig gesperrt, bis sie im Admin-Panel
+  freigegeben wird.
 
-### `Manual`
+## Dokumentation
 
-Enthält vorhandene Bedienungs- und Systemdokumentationen. Ältere Dokumente können
-noch die Versionsnummer 1.4.6 tragen.
+- [English installation manual](Installer/README.md)
+- [Offline package preparation](Installer/Packages/README.txt)
+- Weitere Word- und PDF-Dokumente befinden sich unter `Manual`.
 
-## Was gehört in das Softwarepaket?
+## Lizenz
 
-Mitgeliefert werden sollten:
-
-- `app.py`
-- `app_streamdeck.py`
-- `button_config.json`
-- `kiosk.bat`
-- `static` mit allen benötigten Medien und HTML-Dateien
-- `Installer`
-- `README.md`
-- optional `Manual`, Logos und weitere Dokumentation
-
-Nicht mitgeliefert werden müssen:
-
-- `.venv`
-- `.vs`
-- `__pycache__`
-- temporäre Dateien
-- `Thumbs.db`
-
-## Kurzer Funktionstest
-
-Nach einer Installation sollten folgende Punkte geprüft werden:
-
-1. `kiosk.bat` startet beide Terminal-Tabs.
-2. Firefox öffnet sich im Vollbild-Kioskmodus.
-3. Das Startvideo läuft mit Ton.
-4. Remote und Admin sind über die angezeigte Netzwerkadresse erreichbar.
-5. Ein vorhandenes Video und eine Slideshow lassen sich starten.
-6. Ein fehlendes Medium wird markiert und blockiert.
-7. Das Stream Deck lässt sich sperren und freigeben.
-8. Das Stream Deck funktioniert nach Abziehen und erneutem Anstecken weiter.
-9. Beim Speichern der Konfiguration wird unter `Backups` eine Sicherung erstellt.
-
-## Beenden
-
-Firefox kann im Kioskmodus mit `Alt` + `F4` beendet werden. Anschließend die
-beiden Terminal-Tabs beziehungsweise das Windows-Terminal schließen, um Server
-und StreamDeck-Treiber zu beenden.
+Für dieses Projekt ist derzeit keine separate Lizenzdatei hinterlegt.
 
