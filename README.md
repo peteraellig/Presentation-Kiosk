@@ -1,5 +1,76 @@
 # Presentation Kiosk 1.4.7
 
+## Control safety messages simply, quickly, and flexibly
+
+Presentation Kiosk provides a straightforward way to display warning and
+safety messages on public screens.
+
+### The problem: safety communication at temporary events
+
+Large temporary events such as festivals, open-air events, sports events, and
+trade fairs repeatedly face the same challenge:
+
+> How can safety messages be delivered to the audience quickly and reliably
+> during an emergency when no permanent infrastructure is available?
+
+Permanent venues often have dedicated systems installed for this purpose.
+Temporary events usually do not. Teams are therefore forced to improvise,
+often using a locally connected and difficult-to-reach computer running a
+PowerPoint presentation that cannot be controlled centrally.
+
+### The solution
+
+Presentation Kiosk is a network-based system designed for simple communication
+in exceptional situations. It is reliable, flexible, and ready for immediate
+use once the event media has been prepared.
+
+### Key benefits
+
+#### Central control
+
+Safety messages can be triggered from any authorized device with a web browser
+on the same network, either from the event control room or from a mobile
+position on site.
+
+#### Password protected
+
+The control interfaces are protected and available only to authorized users.
+
+#### Minimal hardware, maximum effect
+
+A small Windows PC is sufficient. Connect its HDMI output to the video control
+system for the public screens, and the system is ready to operate.
+
+#### Ready for immediate use
+
+Once the prepared messages, images, and videos have been copied to the system
+and configured, they can be displayed without additional production software.
+
+> **Important:** Presentation Kiosk is designed exclusively to display finished
+> content. It does not edit or create media. Existing content can, however, be
+> replaced or updated directly on site at any time.
+
+#### Independent of the internet
+
+After installation, the system operates entirely within the local event
+network. An internet connection is not required during operation.
+
+#### Local control when required
+
+The system can also be operated locally with a Stream Deck when no external
+network connection is available.
+
+### Conclusion
+
+**Maximum safety with minimal effort.**
+
+Presentation Kiosk helps event teams respond quickly and reliably when it
+matters most.
+
+---
+
+## Technical overview
+
 A local alert and presentation system for temporary events, spontaneous
 operations, and ad-hoc crisis management.
 
