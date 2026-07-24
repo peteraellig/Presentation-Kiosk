@@ -26,3 +26,4 @@ static/videos_playlist/*.mp4
 desktop.ini
 *.user
 *.suo
+~$*
