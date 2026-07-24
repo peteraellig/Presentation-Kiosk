@@ -107,7 +107,7 @@ The presentation interface runs in Firefox in full-screen kiosk mode. It
 receives media changes through Socket.IO and displays individual images,
 videos, slideshows, or playlists.
 
-![Presentation output](docs/images/presentation.png)
+![Presentation output](Manual/presentation.png)
 
 Local addresses:
 
@@ -121,7 +121,7 @@ The browser-based Remote interface displays enabled media as clear control
 buttons. Changes are applied immediately to the presentation. It also provides
 previews for slideshows and videos.
 
-![Remote control](docs/images/remote.png)
+![Remote control](Manual/remote.png)
 
 Address:
 
@@ -144,7 +144,7 @@ shows:
 - button assignments;
 - Stream Deck lock status.
 
-![Admin dashboard](docs/images/admin.png)
+![Admin dashboard](Manual/admin.png)
 
 Address:
 
@@ -161,7 +161,7 @@ backed up automatically in `Backups`. The latest 20 backups are retained.
 The Remote and Admin interfaces are protected by a username and password by
 default. The credentials must be changed in `app.py` before production use.
 
-![Password prompt](docs/images/password.png)
+![Password prompt](Manual/password.png)
 
 ## System architecture
 
@@ -325,7 +325,6 @@ C:\kiosk
 ├── Installer\
 ├── Manual\
 ├── static\
-├── docs\images\
 ├── Backups\        # generated automatically
 ├── .venv\          # generated automatically
 ├── .vs\            # Visual Studio data only
