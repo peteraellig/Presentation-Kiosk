@@ -1,99 +1,98 @@
 # Presentation Kiosk 1.4.7
 
-Ein lokales Alert- und Präsentationssystem für temporäre Events, spontane
-Organisationsformen und Ad-hoc-Krisenmanagement.
+A local alert and presentation system for temporary events, spontaneous
+operations, and ad-hoc crisis management.
 
-Das System zeigt Videos, Bilder, Slideshows und Playlists auf einem
-Präsentationsbildschirm. Inhalte lassen sich zentral über eine einfache
-Weboberfläche oder optional über ein Elgato Stream Deck steuern. Änderungen
-werden in Echtzeit an alle verbundenen Clients übertragen.
+The system displays videos, images, slideshows, and playlists on a presentation
+screen. Content can be controlled centrally through a simple web interface or,
+optionally, an Elgato Stream Deck. Changes are distributed to all connected
+clients in real time.
 
-> Ziel des Projekts ist eine einfache, selbsterklärende und ortsunabhängige
-> Bedienung, die möglichst ohne vorherige Schulung funktioniert.
+> The project is designed to be simple, self-explanatory, and location
+> independent, requiring as little prior training as possible.
 
-## Installation und Start
+## Installation and startup
 
-Die vollständige englische Installationsanleitung befindet sich unter
+The complete installation guide is available in
 [Installer/README.md](Installer/README.md).
 
-Kurzfassung:
+Quick start:
 
-1. Den Projektordner nach `C:\kiosk` kopieren.
-2. `Installer\Install_Kiosk.cmd` als Administrator starten.
-3. Nach abgeschlossener Installation `C:\kiosk\kiosk.bat` ausführen.
-4. Das automatisch geöffnete Firefox-Kioskfenster verwenden.
+1. Copy the project folder to `C:\kiosk`.
+2. Run `Installer\Install_Kiosk.cmd` as administrator.
+3. After installation, launch `C:\kiosk\kiosk.bat`.
+4. Use the Firefox kiosk window that opens automatically.
 
-Das Projekt verwendet ausdrücklich **Python 3.12.6** und festgeschriebene,
-getestete Paketversionen.
+The project explicitly uses **Python 3.12.6** and tested, pinned package
+versions.
 
-## Oberflächen
+## Interfaces
 
-### Präsentation
+### Presentation
 
-Die Präsentationsoberfläche läuft in Firefox im Vollbild-Kioskmodus. Sie
-empfängt Medienwechsel über Socket.IO und zeigt einzelne Bilder, Videos,
-Slideshows oder Playlists an.
+The presentation interface runs in Firefox in full-screen kiosk mode. It
+receives media changes through Socket.IO and displays individual images,
+videos, slideshows, or playlists.
 
 ![Presentation output](docs/images/presentation.png)
 
-Lokale Adressen:
+Local addresses:
 
 - `http://localhost:53100/`
 - `http://localhost:53100/presentation`
 - `http://localhost:53100/presentation.html`
 
-### Remote-Steuerung
+### Remote control
 
-Die browserbasierte Remote-Oberfläche stellt die aktivierten Medien als
-übersichtliche Schaltflächen dar. Änderungen werden sofort auf der Präsentation
-ausgeführt. Für Slideshows und Videos wird eine Vorschau angezeigt.
+The browser-based Remote interface displays enabled media as clear control
+buttons. Changes are applied immediately to the presentation. It also provides
+previews for slideshows and videos.
 
 ![Remote control](docs/images/remote.png)
 
-Adresse:
+Address:
 
 ```text
 http://<KIOSK-IP>:53100/remote
 ```
 
-Fehlende Medien werden gekennzeichnet und können nicht gestartet werden.
-Stattdessen erscheint eine Meldung mit dem erwarteten Datei- oder Ordnerpfad.
+Missing media is marked and cannot be started. Instead, the interface displays
+a message containing the expected file or directory path.
 
-### Admin-Dashboard
+### Admin dashboard
 
-Das Admin-Dashboard dient zur technischen Kontrolle und Konfiguration. Es zeigt
-unter anderem:
+The Admin dashboard is used for technical monitoring and configuration. It
+shows:
 
-- aktuell aktives Medium,
-- Verbindungsstatus von Präsentation und Remote,
-- Server-Heartbeat,
-- geplantes Standardmedium,
-- Button-Belegung,
-- StreamDeck-Sperrstatus.
+- the currently active medium;
+- presentation and Remote connection status;
+- the server heartbeat;
+- the scheduled default medium;
+- button assignments;
+- Stream Deck lock status.
 
 ![Admin dashboard](docs/images/admin.png)
 
-Adresse:
+Address:
 
 ```text
 http://<KIOSK-IP>:53100/admin
 ```
 
-Fehlende Mediendateien und leere Medienordner werden im Admin-Panel farblich
-markiert. Beim Speichern wird die bisherige `button_config.json` automatisch
-unter `Backups` gesichert. Die letzten 20 Sicherungen bleiben erhalten.
+Missing media files and empty media directories are highlighted in the Admin
+panel. When the configuration is saved, the previous `button_config.json` is
+backed up automatically in `Backups`. The latest 20 backups are retained.
 
-### Passwortschutz
+### Password protection
 
-Remote- und Admin-Oberfläche sind standardmäßig durch Benutzername und Passwort
-geschützt. Die Zugangsdaten müssen vor einem produktiven Einsatz in `app.py`
-angepasst werden.
+The Remote and Admin interfaces are protected by a username and password by
+default. The credentials must be changed in `app.py` before production use.
 
 ![Password prompt](docs/images/password.png)
 
-## Systemarchitektur
+## System architecture
 
-Das Kiosk-System ist modular aufgebaut:
+The Kiosk system has a modular architecture:
 
 ```text
 Remote / Admin / Stream Deck
@@ -103,133 +102,129 @@ Remote / Admin / Stream Deck
            app.py
              │
              ▼
-    Präsentationsbrowser
+    Presentation browser
 ```
 
-### Server – `app.py`
+### Server — `app.py`
 
-Der Python-Server ist das Herzstück des Systems:
+The Python server is the central component of the system:
 
-- stellt Präsentation, Remote und Admin bereit,
-- verwaltet das aktuell aktive Medium,
-- synchronisiert Clients in Echtzeit über Socket.IO,
-- überwacht Verbindungen per Heartbeat,
-- startet zu einer festgelegten Uhrzeit ein Standardmedium,
-- prüft, ob konfigurierte Medien vorhanden sind,
-- sichert Änderungen an der Button-Konfiguration.
+- provides the Presentation, Remote, and Admin interfaces;
+- manages the currently active medium;
+- synchronizes clients in real time through Socket.IO;
+- monitors connections using a heartbeat;
+- starts a default medium at a configured time;
+- verifies whether configured media is available;
+- backs up changes to the button configuration.
 
-Der Server lauscht standardmäßig auf Port `53100`.
+The server listens on port `53100` by default.
 
-### Präsentationsoberfläche – `static/presentation.html`
+### Presentation interface — `static/presentation.html`
 
-- läuft im Browser auf dem Präsentationsrechner,
-- startet und stoppt Bilder, Videos, Slideshows und Playlists,
-- zeigt beim Start kurz IP-Adresse und Port,
-- meldet den aktuellen Präsentationsstatus an den Server.
+- runs in the browser on the presentation computer;
+- starts and stops images, videos, slideshows, and playlists;
+- briefly displays the IP address and port during startup;
+- reports the current presentation status to the server.
 
-### Remote-Oberfläche – `static/remote.html`
+### Remote interface — `static/remote.html`
 
-- lädt aktivierte Buttons dynamisch aus `button_config.json`,
-- startet Medien über Socket.IO,
-- zeigt Vorschauen und den aktuellen Präsentationsstatus,
-- blockiert konfigurierte, aber fehlende Medien.
+- loads enabled buttons dynamically from `button_config.json`;
+- starts media through Socket.IO;
+- displays previews and the current presentation status;
+- blocks configured but missing media.
 
-### Admin-Oberfläche – `static/admin.html`
+### Admin interface — `static/admin.html`
 
-- zeigt Server- und Clientstatus,
-- bearbeitet Button-Belegung, Beschriftung, Typ und Medienpfad,
-- markiert fehlende Medien,
-- sperrt oder entsperrt die StreamDeck-Bedienung.
+- displays server and client status;
+- edits button assignments, labels, types, and media paths;
+- highlights missing media;
+- locks or unlocks Stream Deck input.
 
-### StreamDeck-Treiber – `app_streamdeck.py`
+### Stream Deck driver — `app_streamdeck.py`
 
-Der separate Python-Prozess bindet ein kompatibles Elgato Stream Deck ein:
+The separate Python process integrates a compatible Elgato Stream Deck:
 
-- liest die Belegung aus `button_config.json`,
-- rendert Beschriftung und Aktivstatus auf den Tasten,
-- sendet lokale API-Befehle an den Server,
-- verbindet sich nach einem Server- oder USB-Unterbruch automatisch neu,
-- bleibt beim Start standardmäßig für Eingaben gesperrt und dient zunächst als
-  Statusanzeige.
+- reads button assignments from `button_config.json`;
+- renders labels and active states on the keys;
+- sends local API commands to the server;
+- reconnects automatically after server or USB interruptions;
+- starts with input locked and initially acts as a status display.
 
-## Kommunikation
+## Communication
 
 ### Socket.IO
 
-Socket.IO übernimmt die Echtzeitkommunikation zwischen Server, Präsentation,
-Remote, Admin und StreamDeck-Treiber. Wichtige Ereignisse sind:
+Socket.IO provides real-time communication between the server, Presentation,
+Remote, Admin, and the Stream Deck driver. Important events include:
 
-- `show_media` – Medium wechseln,
-- `slideshow_image` – aktuelles Slideshow-Bild melden,
-- `heartbeat_request` / `heartbeat_response` – Verbindung prüfen,
-- `reload_config` – Button-Belegung neu laden,
-- `set_streamdeck_input_lock` – StreamDeck sperren oder freigeben.
+- `show_media` — change the active medium;
+- `slideshow_image` — report the current slideshow image;
+- `heartbeat_request` / `heartbeat_response` — check the connection;
+- `reload_config` — reload button assignments;
+- `set_streamdeck_input_lock` — lock or unlock Stream Deck input.
 
-### Lokale HTTP-API
+### Local HTTP API
 
-Das Stream Deck verwendet:
+The Stream Deck uses:
 
 ```text
-http://localhost:53100/api?Function=<FUNKTION>
+http://localhost:53100/api?Function=<FUNCTION>
 ```
 
-Beispiele für Funktionen sind `video1`, `bild3`, `playlist` und `reset`.
+Example functions include `video1`, `bild3`, `playlist`, and `reset`.
 
-Die API akzeptiert aus Sicherheitsgründen nur Aufrufe vom lokalen
-Kiosk-Rechner (`127.0.0.1` oder `::1`). Externe Geräte können diese API nicht
-direkt verwenden.
+For security, the API accepts requests only from the local Kiosk computer
+(`127.0.0.1` or `::1`). External devices cannot call this API directly.
 
-## Medien und Button-Belegung
+## Media and button assignments
 
-Alle Präsentationsmedien liegen unter `static`:
+All presentation media is stored below `static`:
 
-| Pfad | Verwendung |
+| Path | Purpose |
 |---|---|
-| `static/videos` | einzelne Videos |
-| `static/videos_playlist` | fortlaufende Video-Playlist |
-| `static/bild1` bis `static/bild10` | Bilder für Meldungen und Slideshows |
-| `static/Message Templates` | Vorlagen für neue Meldungsgrafiken |
+| `static/videos` | individual videos |
+| `static/videos_playlist` | continuous video playlist |
+| `static/bild1` through `static/bild10` | images used for alerts and slideshows |
+| `static/Message Templates` | templates for new alert graphics |
 
-Die Datei `button_config.json` definiert:
+The `button_config.json` file defines:
 
-- ob ein Button aktiviert ist,
-- seine Beschriftung,
-- den Medientyp (`video`, `slideshow` oder `playlist`),
-- den zugehörigen Datei- oder Ordnerpfad.
+- whether a button is enabled;
+- its label;
+- the media type (`video`, `slideshow`, or `playlist`);
+- the associated file or directory path.
 
-Medien können direkt vor Ort erstellt und in die vorbereiteten Ordner kopiert
-werden. Nur die für das jeweilige Event benötigten Einträge müssen im
-Admin-Panel aktiviert werden.
+Media can be created on location and copied into the prepared directories. Only
+the entries required for the current event need to be enabled in the Admin
+panel.
 
 ## Scheduler
 
-Der Server kann täglich zu einer festgelegten Uhrzeit automatisch ein
-Standardmedium starten. Dies eignet sich beispielsweise dafür, nach einem Event
-oder einer Alarmmeldung wieder zum Sponsor- beziehungsweise Werbeloop
-zurückzukehren.
+The server can automatically start a configured default medium at a specified
+time each day. This can be used to return to a sponsor or advertising loop
+after an event or alert message.
 
-Die Einstellungen `SCHEDULE_TIME` und `SCHEDULE_PROGRAM` befinden sich in
-`app.py`.
+The `SCHEDULE_TIME` and `SCHEDULE_PROGRAM` settings are located in `app.py`.
 
-## SDI-Ausgabe
+## SDI output
 
-Falls eine SDI-Ausgabe benötigt wird, kann das HDMI-Signal des
-Präsentationsrechners über einen HDMI-zu-SDI-Wandler in eine bestehende
-Videoinfrastruktur eingespeist werden.
+If an SDI output is required, the HDMI signal from the presentation computer
+can be connected to existing video infrastructure through an HDMI-to-SDI
+converter.
 
-Typischer Ablauf unter Windows 11:
+Typical procedure on Windows 11:
 
-1. Präsentationsrechner per HDMI mit dem HDMI-zu-SDI-Wandler verbinden.
-2. Unter **Anzeigeeinstellungen** den betreffenden HDMI-Ausgang auswählen.
-3. Als Auflösung beispielsweise `1920 × 1080` einstellen.
-4. Unter **Erweiterte Anzeige** die Adaptereigenschaften öffnen.
-5. Über **Alle Modi auflisten** nach Möglichkeit `1080i, 50 Hz` wählen.
+1. Connect the presentation computer to the HDMI-to-SDI converter.
+2. Select the relevant HDMI output in **Display settings**.
+3. Set the resolution to, for example, `1920 × 1080`.
+4. Open the adapter properties under **Advanced display**.
+5. Use **List all modes** and select `1080i, 50 Hz` where available.
 
-Welche Modi verfügbar sind, hängt von Grafikkarte und Treiber ab. Falls nur
-`1080p50` angeboten wird, ist für eine echte `1080i50`-Ausgabe ein geeigneter
-Cross-Converter erforderlich.
+The available modes depend on the graphics card and driver. If only `1080p50`
+is available, a suitable cross converter is required to produce a true
+`1080i50` signal.
 
-## Verwendete Technologien
+## Technologies
 
 - Python 3.12.6
 - Flask
@@ -240,13 +235,13 @@ Cross-Converter erforderlich.
 - Pillow
 - StreamDeck SDK
 - HIDAPI
-- HTML, CSS und JavaScript
-- Mozilla Firefox im Kioskmodus
+- HTML, CSS, and JavaScript
+- Mozilla Firefox in kiosk mode
 
-Die vollständigen geprüften Paketversionen stehen in
+The complete set of tested package versions is listed in
 `Installer/requirements.txt`.
 
-## Projektstruktur
+## Project structure
 
 ```text
 C:\kiosk
@@ -258,30 +253,29 @@ C:\kiosk
 ├── Manual\
 ├── static\
 ├── docs\images\
-├── Backups\        # automatisch erzeugt
-├── .venv\          # automatisch erzeugt
-├── .vs\            # nur Visual-Studio-Daten
-└── __pycache__\    # automatisch erzeugter Python-Cache
+├── Backups\        # generated automatically
+├── .venv\          # generated automatically
+├── .vs\            # Visual Studio data only
+└── __pycache__\    # generated Python cache
 ```
 
-`.venv`, `.vs`, `__pycache__`, `Backups` und temporäre Dateien werden nicht im
-Git-Repository benötigt.
+`.venv`, `.vs`, `__pycache__`, `Backups`, and temporary files are not required
+in the Git repository.
 
-## Sicherheitshinweise
+## Security notes
 
-- Standard-Zugangsdaten vor dem Einsatz ändern.
-- Remote und Admin nur in einem vertrauenswürdigen Produktionsnetz verwenden.
-- Die StreamDeck-API ist ausschließlich lokal erreichbar.
-- Die StreamDeck-Eingabe bleibt standardmäßig gesperrt, bis sie im Admin-Panel
-  freigegeben wird.
+- Change the default credentials before deployment.
+- Use Remote and Admin only on a trusted production network.
+- The Stream Deck API is available locally only.
+- Stream Deck input remains locked until it is enabled in the Admin panel.
 
-## Dokumentation
+## Documentation
 
-- [English installation manual](Installer/README.md)
+- [Installation manual](Installer/README.md)
 - [Offline package preparation](Installer/Packages/README.txt)
-- Weitere Word- und PDF-Dokumente befinden sich unter `Manual`.
+- Additional Word and PDF documents are available in `Manual`.
 
-## Lizenz
+## License
 
-Für dieses Projekt ist derzeit keine separate Lizenzdatei hinterlegt.
+No separate license file is currently included with this project.
 
