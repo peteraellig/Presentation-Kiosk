@@ -18,6 +18,7 @@ Installer/a/
 # Veranstaltungsmedien werden vor Ort bereitgestellt.
 # Große MP4-Dateien überschreiten teilweise das GitHub-Limit von 100 MB.
 static/videos/*.mp4
+!static/videos/video1.mp4
 static/videos_playlist/*.mp4
 
 # Betriebssystem- und Editorreste
