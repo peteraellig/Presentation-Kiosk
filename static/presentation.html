@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+  <!-- Presentation System v1.4.5 · July 2025 · Peter Aellig -->
+  <!-- presentation.html -->
+  <!-- change standard display content at the end of this file! -->
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Presentation Screen</title>
+  <script src="static/socket.io.min.js"></script>
+  <style>
+
+    body { 
+      background: #222; 
+      margin: 0; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      height: 100vh;
+      cursor: none;
+    }
+    
+    #img, #vid { 
+      display: none; 
+      max-width: 100vw; 
+      max-height: 100vh; 
+      cursor: none; 
+    }
+  </style>
+</head>
+<body>
+  <img id="img" alt="Bild">
+  <video id="vid" autoplay playsinline style="background:#000;"></video>
+    <div id="serverIpBadge" style="position: fixed; right: 16px; bottom: 16px; background: rgba(0,0,0,0.65); color: #fff; font: 14px/1.4 sans-serif; padding: 8px 12px; border-radius: 8px; z-index: 9999; display:none; white-space: pre-line;">
+    </div>
+    </div>
+  <script>
+    const socket = io();
+    socket.emit('register_presentation');
+
+    const img = document.getElementById('img');
+    const vid = document.getElementById('vid');
+    const ipBadge = document.getElementById('serverIpBadge');
+    let slideshowTimer = null, slideshowFiles = [], slideshowIdx = 0, slideshowFolder = null;
+    let playlistFiles = [], playlistIdx = 0, playlistActive = false;
+
+    function stopSlideshow() {
+      if (slideshowTimer) clearInterval(slideshowTimer);
+      slideshowTimer = null;
+      slideshowFiles = [];
+      slideshowIdx = 0;
+      slideshowFolder = null;
+    }
+
+    function stopPlaylist() {
+      playlistActive = false;
+      playlistFiles = [];
+      playlistIdx = 0;
+      vid.removeEventListener('ended', playlistNextHandler);
+    }
+
+    function showImage(src) {
+      stopSlideshow();
+      stopPlaylist();
+       stopVideo(); 
+      vid.pause(); vid.style.display = "none";
+      img.src = "static/" + src;
+      img.style.display = "block";
+    }
+
+      function stopVideo() {
+      vid.pause();
+      vid.removeAttribute('src'); // Quelle kappen, damit wirklich Ruhe ist
+      vid.load();                 // Media-Element zurücksetzen
+      vid.style.display = "none";
+    }
+
+    function showVideo(src) {
+      stopSlideshow();
+      stopPlaylist();
+      img.style.display = "none";
+      vid.src = "static/" + src;
+      vid.style.display = "block";
+      vid.loop = true;        // Ensures loop for single videos!
+      vid.muted = false;       // Autoplay
+      vid.volume = 1.0;
+      vid.play().catch(async (e) => {
+        console.warn("Autoplay mit Ton blockiert, versuche Workaround:", e);
+        // Fallback: kurz stumm starten, dann wieder laut
+        vid.muted = true;
+        try { await vid.play(); } catch {}
+        setTimeout(() => { vid.muted = false; }, 100);
+        });
+    }
+
+
+    async function showSlideshow(folder) {
+      stopSlideshow();
+      stopPlaylist();
+      stopVideo(); 
+      img.style.display = "block";
+      vid.style.display = "none";
+      slideshowFolder = folder;
+      let files = [];
+      try {
+        const resp = await fetch(`/filelist?folder=${encodeURIComponent(folder)}`);
+        files = await resp.json();
+      } catch(e) {}
+      if (files.length === 0) { img.style.display = "none"; return; }
+      slideshowFiles = files;
+      slideshowIdx = 0;
+      function showNext() {
+        img.src = "static/" + folder + slideshowFiles[slideshowIdx];
+        socket.emit('slideshow_image', { folder, file: slideshowFiles[slideshowIdx] });
+        slideshowIdx = (slideshowIdx + 1) % slideshowFiles.length;
+      }
+      showNext();
+      // wie lange wird ein slide gezeigt (1000 = 1 Minute)
+      slideshowTimer = setInterval(showNext, 3000);
+    }
+
+    // Handler zum nächsten Video in der Playlist
+    function playlistNextHandler() {
+      if (!playlistActive) return;
+      playlistIdx = (playlistIdx + 1) % playlistFiles.length;
+      vid.src = "static/videos_playlist/" + playlistFiles[playlistIdx];
+      vid.play();
+    }
+
+  async function showVideoPlaylist() {
+      stopSlideshow();
+      stopPlaylist();
+      img.style.display = "none";
+      vid.style.display = "block";
+
+      let files = [];
+      try {
+        const resp = await fetch(`/filelist?folder=videos_playlist/`);
+        files = await resp.json();
+      } catch(e) {}
+      files = files.filter(f => f.toLowerCase().endsWith('.mp4'));
+      if (files.length === 0) { vid.style.display = "none"; return; }
+
+      playlistFiles = files;
+      playlistIdx = 0;
+      playlistActive = true;
+
+      vid.src = "static/videos_playlist/" + playlistFiles[playlistIdx];
+      vid.muted = false;        // <-- Ton an
+      vid.volume = 1.0;
+      vid.loop = false;
+
+      vid.play().catch(async (e) => {
+        console.warn("Autoplay (Playlist) blockiert:", e);
+        vid.muted = true;
+        try { await vid.play(); } catch {}
+        setTimeout(() => { vid.muted = false; }, 100);
+      });
+
+      vid.removeEventListener('ended', playlistNextHandler);
+      vid.addEventListener('ended', playlistNextHandler);
+    }
+
+    socket.on('show_media', (data) => {
+      if (data.type === "image") showImage(data.src);
+      else if (data.type === "video") showVideo(data.src);
+      else if (data.type === "slideshow") showSlideshow(data.src);
+      else if (data.type === "playlist") showVideoPlaylist();
+    });
+
+    // Standardanzeige: Slideshow bild1
+    //showSlideshow("bild1/");
+
+    // Standardanzeige: Sponsorvideo 1
+    showVideo("videos/video1.mp4");
+    
+    // === Einstellungen ===
+
+    // wieviele Minuten soll die IP ab Start von app.py zu sehen sein?
+    const IP_BADGE_MINUTES = 1;   // <— HIER anpassen
+
+    // Minuten -> Millisekunden
+    const msFromMinutes = (m) => m * 60 * 1000;
+
+    // started_at kann in s oder ms kommen -> normalisieren
+    const normalizeStartedAtMs = (started_at) => {
+      if (!started_at) return 0;
+      return started_at > 1e12 ? started_at : started_at * 1000;
+    };
+
+    // mm:ss formatieren
+    const formatMMSS = (ms) => {
+      const totalSec = Math.max(0, Math.floor(ms / 1000));
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    };
+
+    // Timer-Handles, damit wir bei neuen Events sauber aufräumen
+    let ipHideTimeout = null;
+    let ipCountdownInterval = null;
+
+
+    // zeigt ip an
+    // zeigt IP + Countdown an (mm:ss), räumt alte Timer sauber auf
+
+    
+socket.on('server_info', (data) => {
+  // laufende Timer stoppen
+  if (ipHideTimeout) { clearTimeout(ipHideTimeout); ipHideTimeout = null; }
+  if (ipCountdownInterval) { clearInterval(ipCountdownInterval); ipCountdownInterval = null; }
+
+  const appStartedAtMs = normalizeStartedAtMs(data.started_at); // vom Server
+  const nowMs = Date.now();
+  const totalVisibleMs = msFromMinutes(IP_BADGE_MINUTES);
+
+  const elapsedSinceStart = nowMs - appStartedAtMs;
+  let remainingMs = Math.max(0, totalVisibleMs - elapsedSinceStart);
+
+  if (remainingMs > 0 && data.ip) {
+    // IP + verbleibende Zeit (zweite Zeile)
+    ipBadge.textContent = `Server: ${data.ip}:${data.port}\nIP blendet aus in: ${formatMMSS(remainingMs)}`;
+    ipBadge.style.display = 'block';
+
+    // Countdown aktualisieren
+    ipCountdownInterval = setInterval(() => {
+      remainingMs -= 250;
+      if (remainingMs <= 0) {
+        clearInterval(ipCountdownInterval);
+        ipCountdownInterval = null;
+        ipBadge.style.display = 'none';
+        return;
+      }
+      ipBadge.textContent = `Server-IP: ${data.ip}:${data.port}\nIP blendet aus in: ${formatMMSS(remainingMs)}`;
+    }, 250);
+
+    // Failsafe: nach Ablauf ausblenden
+    ipHideTimeout = setTimeout(() => {
+      if (ipCountdownInterval) clearInterval(ipCountdownInterval);
+      ipCountdownInterval = null;
+      ipBadge.style.display = 'none';
+    }, remainingMs + 50);
+  } else {
+    ipBadge.style.display = 'none';
+  }
+});
+    </script>
+</body>
+</html>

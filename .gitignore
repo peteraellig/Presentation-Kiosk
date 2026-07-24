@@ -1,0 +1,27 @@
+# Lokale Python- und Entwicklungsumgebungen
+.venv/
+.vs/
+__pycache__/
+*.py[cod]
+
+# Laufzeitdaten und Sicherungen
+Backups/
+*.log
+*.tmp
+Thumbs.db
+
+# Heruntergeladene/offline Installationspakete
+Installer/Packages/*
+!Installer/Packages/README.txt
+Installer/a/
+
+# Veranstaltungsmedien werden vor Ort bereitgestellt.
+# Große MP4-Dateien überschreiten teilweise das GitHub-Limit von 100 MB.
+static/videos/*.mp4
+static/videos_playlist/*.mp4
+
+# Betriebssystem- und Editorreste
+.DS_Store
+desktop.ini
+*.user
+*.suo

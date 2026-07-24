@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+  <!-- Presentation System v1.4.7 · July 2026 · Peter Aellig -->
+  <!-- admin.html -->
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard</title>
+  <script src="static/socket.io.min.js"></script>
+  <style>
+    body {
+      background: #f4f4f4;
+      font-family: sans-serif;
+      padding: 0.2em 2em 2em 2em; /* oben rechts unten links */
+    }
+    h1 {
+      color: #333;
+    }
+    .status-box {
+      background: #fff;
+      padding: 0.5em;
+      border-radius: 1em;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+      max-width: 600px;
+      margin-bottom: 2em;
+    }
+    .status-line {
+      margin: 0.5em 0;
+      font-size: 1.1em;
+    }
+    button {
+      font-size: 1em;
+      margin: 0.5em 0.3em;
+      padding: 0.5em 1.5em;
+      border: none;
+      border-radius: 0.5em;
+      background: #379;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #58a;
+    }
+    .heartbeat-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin-left: 0.5em;
+      border-radius: 50%;
+    }
+
+    .heartbeat-ok {
+      background-color: green;
+      animation: pulse 1.5s infinite;
+      margin-bottom: +1px;
+      margin-left: +20px;
+    }
+    
+    .heartbeat-fail {
+      background-color: red;
+      margin-bottom: -8px;
+      width: 30px;
+      height: 30px;
+    }
+
+    .media-missing {
+      background: #ffd7d7;
+      border: 2px solid #c62828;
+      border-radius: 0.5em;
+      margin: 0.35em 0;
+      padding: 0.35em;
+    }
+
+    .media-missing-message {
+      color: #b00020;
+      font-weight: bold;
+      margin-left: 0.75em;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.5; }
+      30% { transform: scale(3); opacity: 1; }
+      100% { transform: scale(1); opacity: 0.5; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Presentation Screen Admin Dashboard</h1>
+
+  <!-- Statusanzeige-Box -->
+  <div class="status-box">
+    <div class="status-line">Current media type: <strong id="media-type">-</strong></div>
+    <div class="status-line">Media source: <strong id="media-src">-</strong></div>
+    <div class="status-line">Presentation client connected: <strong id="presentation-connected">-</strong></div>
+    <div class="status-line">Remote client connected: <strong id="remote-connected">-</strong></div>
+    <div class="status-line">Scheduled event (daily at <span id="schedule-time">--:--</span>): <strong id="schedule-src">-</strong></div>
+    <div class="status-line">Server status: <strong id="heartbeat">being checked...</strong><span id="heartbeat-icon" class="heartbeat-indicator"></span></div>
+  </div>
+
+  <!-- Aktionsbuttons -->
+  <div>
+    <button onclick="resetToDefault()">Reset to default program</button>
+    <button onclick="triggerSchedule()">Play scheduled medium now</button> 
+  </div>
+
+  <h2>Button-Konfiguration</h2>
+<div id="button-config"></div>
+<button onclick="saveButtonConfig()">Save Button Configuration</button>
+
+<label>
+  <input type="checkbox" id="lock-streamdeck-input" style="margin-left: 50px;">
+  Allow StreamDeck control
+</label>
+
+
+
+<script>
+  async function loadConfigEditor() {
+    const resp = await fetch("/button_config");
+    const config = await resp.json();
+    const container = document.getElementById("button-config");
+    socket.emit("get_streamdeck_input_lock");
+    container.innerHTML = "";
+
+    config.buttons.forEach((btn, index) => {
+      const row = document.createElement("div");
+      if (btn.media_available === false) row.classList.add("media-missing");
+      row.innerHTML = `
+        <label>
+          <input type="checkbox" id="enable_${index}" ${btn.enabled ? "checked" : ""}>
+          Aktiv
+        </label>
+        <input type="text" id="label_${index}" value="${btn.label}" style="width:200px;">
+        <select id="type_${index}">
+          <option value="slideshow" ${btn.type === "slideshow" ? "selected" : ""}>Slideshow</option>
+          <option value="video" ${btn.type === "video" ? "selected" : ""}>Video</option>
+          <option value="playlist" ${btn.type === "playlist" ? "selected" : ""}>Playlist</option>
+        </select>
+        <input type="text" id="src_${index}" value="${btn.src}" style="width:200px;">
+        ${btn.media_available === false
+          ? `<span class="media-missing-message">${btn.media_message}</span>`
+          : ""}
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  async function saveButtonConfig() {
+    const container = document.getElementById("button-config");
+    const rows = container.children;
+    const buttons = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      buttons.push({
+        enabled: document.getElementById(`enable_${i}`).checked,
+        label: document.getElementById(`label_${i}`).value,
+        type: document.getElementById(`type_${i}`).value,
+        src: document.getElementById(`src_${i}`).value
+      });
+    }
+
+    const resp = await fetch("/button_config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ buttons })
+    });
+
+    if (resp.ok) {
+      alert("Konfiguration gespeichert.");
+      socket.emit("reload_clients"); // 🔄 Remote aktualisieren
+      await loadConfigEditor();
+    } else {
+      alert("Fehler beim Speichern.");
+    }
+  }
+
+  loadConfigEditor();
+</script>
+
+
+  <!-- WebSocket und Logik -->
+    <script>
+      let socket;
+      let currentMedia = {};
+      let scheduledMedia = {};
+      let heartbeatTimeout = null;
+
+      try {
+        socket = io();
+
+        socket.on('connect', () => {
+          socket.emit('get_status');
+          socket.emit('get_presentation_status');
+          socket.emit('get_schedule_program');
+          socket.emit('get_schedule_time');
+          startHeartbeatMonitor();
+        });
+
+        socket.on('presentation_status', (data) => {
+          document.getElementById("presentation-connected").textContent = data.active ? "Yes" : "No";
+          document.getElementById("remote-connected").textContent = data.remote ? "Yes" : "No";
+        });
+
+        socket.on('show_media', (data) => {
+          currentMedia = data;
+          document.getElementById("media-type").textContent = data.type || "-";
+          document.getElementById("media-src").textContent = data.src ? "static/" + data.src : "-";
+        });
+
+        socket.on('schedule_program', (data) => {
+          scheduledMedia = data;
+          document.getElementById("schedule-src").textContent = data.src || "-";
+
+          // Fix: Falls currentMedia noch leer ist, übernehme geplantes Medium als Ausgangswert
+          if (!currentMedia.type && !currentMedia.src) {
+            currentMedia = { ...data };
+          }
+        });
+
+        socket.on('schedule_time', (value) => {
+          document.getElementById("schedule-time").textContent = value || "--:--";
+        });
+
+        socket.on('heartbeat_response', (data) => {
+          const hb = document.getElementById('heartbeat');
+          const icon = document.getElementById('heartbeat-icon');
+          const footer = document.getElementById('footer');
+          const statusBox = document.querySelector('.status-box');
+
+          if (hb && icon) {
+            hb.textContent = '[OK] Server online (' + new Date(data.timestamp * 1000).toLocaleTimeString() + ')';
+            hb.style.color = 'green';
+            icon.className = 'heartbeat-indicator heartbeat-ok';
+          }
+          if (footer) {
+            footer.style.background = "rgba(0,255,0,0.20)";
+          }
+          if (statusBox) {
+            statusBox.style.background = "rgba(0,255,0,0.1)";
+          }
+        });
+
+
+        socket.on('disconnect', () => {
+          const hb = document.getElementById('heartbeat');
+          const icon = document.getElementById('heartbeat-icon');
+          const footer = document.getElementById('footer');
+          const statusBox = document.querySelector('.status-box');
+
+          if (hb && icon) {
+            hb.textContent = '[X] Connection to server interrupted ';
+            hb.style.color = 'red';
+            icon.className = 'heartbeat-indicator heartbeat-fail';
+          }
+          if (footer) {
+            footer.style.background = "rgba(255,0,0,0.20)";
+          }
+          if (statusBox) {
+            statusBox.style.background = "rgba(255,0,0,0.1)";
+          }
+        });
+
+
+      } catch (e) {
+        const hb = document.getElementById('heartbeat');
+        const icon = document.getElementById('heartbeat-icon');
+        if (hb && icon) {
+          hb.textContent = '❌ Server unreachable';
+          hb.style.color = 'red';
+          icon.className = 'heartbeat-indicator heartbeat-fail';
+        }
+      }
+
+      socket.on("set_streamdeck_input_lock", (locked) => {
+        document.getElementById("lock-streamdeck-input").checked = !locked;
+      });
+
+
+      function startHeartbeatMonitor() {
+        setInterval(() => {
+          socket.emit('heartbeat_request');
+          if (heartbeatTimeout) clearTimeout(heartbeatTimeout);
+          heartbeatTimeout = setTimeout(() => {
+            const hb = document.getElementById('heartbeat');
+            const icon = document.getElementById('heartbeat-icon');
+            if (hb && icon) {
+              hb.textContent = '❌ No connection to the server';
+              hb.style.color = 'red';
+              icon.className = 'heartbeat-indicator heartbeat-fail';
+            }
+            heartbeatTimeout = null;
+          }, 10000);
+        }, 5000);
+      }
+
+
+      function resetToDefault() {
+        socket.emit('play_default_program');
+      }
+
+      function triggerSchedule() {
+        socket.emit('show_media', scheduledMedia);
+      }
+
+      document.getElementById("lock-streamdeck-input").addEventListener("change", function () {
+        const allowed = this.checked;
+        socket.emit("set_streamdeck_input_lock", { locked: !allowed });
+      });
+    </script>
+
+    <!-- Footer mit Uhrzeit -->
+    <footer id="footer" style="
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        text-align: center;
+        background: rgba(0,255,0,0.20);
+        color: black;
+        font-size: 0.95em;
+        padding: 0.6em 0;
+        letter-spacing: 0.08em;
+        z-index: 99;
+    ">
+      Presentation System v1.4.7 · July 2026 · Peter Aellig · <span id="clock"></span>
+      <br>
+      <span style="font-size: 0.8em;">
+        Do you have a dual monitor setup? Do you want to move the running presentation output to the other monitor/HDMI?  
+        Move it using the <kbd>Shift</kbd>+<kbd>Windows</kbd> key and the left or right arrow keys.  
+        This will move the window back and forth.
+      </span>
+    </footer>
+    <script>
+      function updateClock() {
+        const now = new Date();
+        let h = now.getHours().toString().padStart(2,'0');
+        let m = now.getMinutes().toString().padStart(2,'0');
+        let s = now.getSeconds().toString().padStart(2,'0');
+        document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+      }
+      setInterval(updateClock, 1000);
+      updateClock();
+    </script>
+
+  </body>
+  </html>

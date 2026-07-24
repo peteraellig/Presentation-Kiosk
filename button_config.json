@@ -1,0 +1,100 @@
+{
+  "buttons": [
+    {
+      "enabled": true,
+      "label": "Preshow Sponsor Loop",
+      "type": "video",
+      "src": "videos/video1.mp4"
+    },
+    {
+      "enabled": true,
+      "label": "Evacuation",
+      "type": "slideshow",
+      "src": "bild1/"
+    },
+    {
+      "enabled": true,
+      "label": "Lock down",
+      "type": "slideshow",
+      "src": "bild2/"
+    },
+    {
+      "enabled": true,
+      "label": "Artist missing",
+      "type": "slideshow",
+      "src": "bild3/"
+    },
+    {
+      "enabled": true,
+      "label": "Weather Alarm",
+      "type": "slideshow",
+      "src": "bild4/"
+    },
+    {
+      "enabled": false,
+      "label": "Notice 5",
+      "type": "slideshow",
+      "src": "bild5/"
+    },
+    {
+      "enabled": false,
+      "label": "Notice 6",
+      "type": "slideshow",
+      "src": "bild6/"
+    },
+    {
+      "enabled": false,
+      "label": "Notice 7",
+      "type": "slideshow",
+      "src": "bild7/"
+    },
+    {
+      "enabled": false,
+      "label": "Notice 8",
+      "type": "slideshow",
+      "src": "bild8/"
+    },
+    {
+      "enabled": false,
+      "label": "Notice 9",
+      "type": "slideshow",
+      "src": "bild9/"
+    },
+    {
+      "enabled": false,
+      "label": "Notice 10",
+      "type": "slideshow",
+      "src": "bild10/"
+    },
+    {
+      "enabled": false,
+      "label": "Video2",
+      "type": "video",
+      "src": "videos/video2.mp4"
+    },
+    {
+      "enabled": false,
+      "label": "Video3",
+      "type": "video",
+      "src": "videos/video3.mp4"
+    },
+    {
+      "enabled": false,
+      "label": "Video4",
+      "type": "video",
+      "src": "videos/video4.mp4"
+    },
+    {
+      "enabled": false,
+      "label": "Video5",
+      "type": "video",
+      "src": "videos/video5.mp4"
+    },
+    {
+      "enabled": false,
+      "label": "Playlist",
+      "type": "playlist",
+      "src": ""
+    }
+  ]
+}

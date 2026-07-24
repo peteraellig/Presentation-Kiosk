@@ -1,0 +1,1 @@
+this player plays only .mp4 videofiles

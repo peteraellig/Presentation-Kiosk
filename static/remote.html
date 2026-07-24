@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Remote-Control Presentation-System </title>
+  <script src="static/socket.io.min.js"></script>
+  <style>
+  /* --- Basis Layout --- */
+  body {
+    background: #eee;
+    font-family: sans-serif;
+    text-align: center;
+    padding-top: 2em;
+  }
+
+  /* --- Buttons --- */
+  button {
+    font-size: 1.3em;
+    margin: 0.7em;
+    padding: 0.7em 2.2em;
+    border: none;
+    border-radius: 1em;
+    background: #379;
+    color: #fff;
+    box-shadow: 0 0 8px #ccc;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+  button:hover {
+    background: #5af;
+    color: #222;
+  }
+  button.active {
+    background: #c22;
+    color: #fff;
+    box-shadow: 0 0 12px #800;
+  }
+
+  /* --- Vorschau-Bereich --- */
+  .preview {
+    margin: 2em auto 0 auto;
+    max-width: 480px;
+    max-height: 270px;
+    background: #222;
+    border-radius: 1em;
+    box-shadow: 0 0 16px #aaa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+  .preview img,
+  .preview video {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 1em;
+    background: #000;
+  }
+
+  /* --- Status-Anzeige --- */
+  #status {
+    margin: 1em auto 0 auto;
+    max-width: 500px;
+    padding: 0.6em 1.5em;
+    color: #fff;
+    background: #b00;
+    font-weight: bold;
+    border-radius: 1em;
+    display: none;
+    box-shadow: 0 0 10px #c22;
+    letter-spacing: 0.02em;
+  }
+</style>
+</head>
+<body>
+  <h2>Presentation System Remote-Control</h2>
+  <div id="status"></div>
+
+
+  <div id="button-container"></div>
+
+
+
+  <div class="preview" id="preview"></div>
+
+  <script>
+    const socket = io();
+    const buttons = Array.from(document.querySelectorAll('button'));
+    const previewDiv = document.getElementById('preview');
+    const statusDiv = document.getElementById('status');
+    let lastSlideshowFolder = null;
+    let presentationActive = false;
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const type = btn.getAttribute('data-type');
+        const src = btn.getAttribute('data-src');
+        if (type === "playlist") {
+          socket.emit('show_media', {type});
+        } else {
+          socket.emit('show_media', {type, src});
+        }
+      });
+    });
+
+    function activateByTypeSrc(type, src) {
+      buttons.forEach(b => {
+        if (
+          b.getAttribute('data-type') === type &&
+          b.getAttribute('data-src') === src
+        ) {
+          b.classList.add("active");
+        } else if (type === "playlist" && b.getAttribute('data-type') === "playlist") {
+          b.classList.add("active");
+        } else {
+          b.classList.remove("active");
+        }
+      });
+      if (type === "slideshow") lastSlideshowFolder = src;
+      else lastSlideshowFolder = null;
+    }
+
+    async function updatePreview(type, src) {
+      if (type === "image") {
+        previewDiv.innerHTML = `<img src="static/${src}" alt="Preview" />`;
+      } else if (type === "slideshow") {
+        let files = [];
+        try {
+          const resp = await fetch(`/filelist?folder=${encodeURIComponent(src)}`);
+          files = await resp.json();
+        } catch(e) {}
+        if (files.length > 0) {
+          previewDiv.innerHTML = `<img src="static/${src}${files[0]}" alt="Slideshow Preview" />`;
+        } else {
+          previewDiv.innerHTML = "(no images found)";
+        }
+      } else if (type === "video") {
+        previewDiv.innerHTML = `<video src="static/${src}" muted autoplay loop playsinline style="width:100%;height:100%;background:#000;"></video>`;
+      } else if (type === "playlist") {
+        previewDiv.innerHTML = `<span style="color:#ccc;font-size:1.2em;">Video playlist is played, no preview possible</span>`;
+      } else {
+        previewDiv.innerHTML = "";
+      }
+    }
+
+    socket.on('slideshow_image', (data) => {
+      if (lastSlideshowFolder === data.folder) {
+        previewDiv.innerHTML = `<img src="static/${data.folder}${data.file}" alt="Slideshow Preview" />`;
+      }
+    });
+
+    socket.on('media_error', (data) => {
+      const message = data && data.message ? data.message : "Medium fehlt.";
+      alert(message);
+      statusDiv.textContent = message;
+      statusDiv.style.display = "block";
+    });
+
+    socket.on('connect', () => {
+      socket.emit('register_remote'); // ✅ ← DAS FEHLT!
+      socket.emit('get_status');
+      socket.emit('get_presentation_status');
+    });
+
+    socket.on('disconnect', () => {
+      statusDiv.textContent = "No connection to the server!";
+      statusDiv.style.display = "block";
+    });
+
+    socket.on('reconnect', () => {
+      statusDiv.textContent = "";
+      statusDiv.style.display = "none";
+      socket.emit('get_status');
+      socket.emit('get_presentation_status');
+    });
+
+    socket.on("reload_config", () => {
+      loadButtons(); // 🔁 lädt neue Konfiguration
+    });
+
+
+    setInterval(() => {
+      socket.emit('get_presentation_status');
+    }, 5000);
+
+    socket.on('presentation_status', (data) => {
+      presentationActive = data.active;
+      if (!presentationActive) {
+        statusDiv.textContent = "Presentation screen computer not connected!";
+        statusDiv.style.display = "block";
+      } else {
+        statusDiv.textContent = "";
+        statusDiv.style.display = "none";
+      }
+    });
+
+    socket.on('show_media', (data) => {
+      activateByTypeSrc(data.type, data.src);
+      updatePreview(data.type, data.src);
+    });
+  </script>
+       <footer id="footer" style="
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    background: rgba(70,70,70,0.30);
+    color: black;
+    font-size: 0.95em;
+    padding: 0.6em 0;
+    letter-spacing: 0.08em;
+    z-index: 99;
+  ">
+    Presentation System v1.4.4 · July 2025 · Peter Aellig · <span id="clock"></span>
+  </footer>
+  <script>
+    function updateClock() {
+      const now = new Date();
+      // DE-Format (24h, Sekunden optional): HH:MM:SS
+      let h = now.getHours().toString().padStart(2,'0');
+      let m = now.getMinutes().toString().padStart(2,'0');
+      let s = now.getSeconds().toString().padStart(2,'0');
+      document.getElementById('clock').textContent = `${h}:${m}:${s}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    async function loadButtons() {
+      try {
+        const resp = await fetch("/button_config");
+        const config = await resp.json();
+        const container = document.getElementById("button-container");
+        container.innerHTML = "";
+
+        config.buttons.forEach(btn => {
+          if (!btn.enabled) return;
+
+          const button = document.createElement("button");
+          button.textContent = btn.label.replace(/\\n/g, "\n") +
+            (btn.media_available === false ? "\n(Medium fehlt)" : "");
+          button.setAttribute("data-type", btn.type);
+          button.setAttribute("data-src", btn.src || "");
+          if (btn.media_available === false) {
+            button.style.background = "#8b1a1a";
+            button.setAttribute("aria-disabled", "true");
+          }
+
+          button.addEventListener("click", () => {
+            if (btn.media_available === false) {
+              const message = btn.media_message || `Medium '${btn.label}' fehlt.`;
+              alert(message);
+              statusDiv.textContent = message;
+              statusDiv.style.display = "block";
+              return;
+            }
+            const type = button.getAttribute("data-type");
+            const src = button.getAttribute("data-src");
+            if (type === "playlist") {
+              socket.emit("show_media", { type });
+            } else {
+              socket.emit("show_media", { type, src });
+            }
+          });
+
+          container.appendChild(button);
+        });
+      } catch (e) {
+        console.error("Fehler beim Laden der Buttons:", e);
+      }
+    }
+
+    loadButtons();
+
+  </script>
+</body>
+</html>
+
+<!-- Peter Aellig  -->
