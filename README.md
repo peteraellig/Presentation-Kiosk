@@ -1,5 +1,7 @@
 # Presentation Kiosk 1.4.7
 
+[**Full manual: Kiosk_Manual_English.pdf**](Manual/Kiosk_Manual_English.pdf)
+
 ## Control safety messages simply, quickly, and flexibly
 
 Presentation Kiosk provides a straightforward way to display warning and
@@ -344,7 +346,7 @@ in the Git repository.
 
 - [Installation manual](Installer/README.md)
 - [Offline package preparation](Installer/Packages/README.txt)
-- Additional Word and PDF documents are available in `Manual`.
+- Additional PDF documentation is available in `Manual`.
 
 ## License
 
