@@ -27,3 +27,6 @@ desktop.ini
 *.user
 *.suo
 ~$*
+
+# Word source manuals remain available locally but are not published.
+Manual/*.docx
