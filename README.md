@@ -277,5 +277,10 @@ in the Git repository.
 
 ## License
 
-No separate license file is currently included with this project.
+This project is licensed under the
+[GNU General Public License v3.0](LICENSE).
 
+The software may be used, studied, modified, and redistributed free of charge
+under the terms of the GPL. Commercial use is also permitted, but distributed
+modified versions must remain GPL-licensed and their corresponding source code
+must be made available.
