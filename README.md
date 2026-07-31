@@ -349,10 +349,7 @@ in the Git repository.
 
 ## License
 
-This project is licensed under the
-[GNU General Public License v3.0](LICENSE).
+This project is released under the [BSD Zero Clause License (0BSD)](LICENSE).
+You may use, copy, modify, and distribute it for any purpose, with or without
+fee, and without attribution.
 
-The software may be used, studied, modified, and redistributed free of charge
-under the terms of the GPL. Commercial use is also permitted, but distributed
-modified versions must remain GPL-licensed and their corresponding source code
-must be made available.
