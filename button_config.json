@@ -4,97 +4,113 @@
       "enabled": true,
       "label": "Preshow Sponsor Loop",
       "type": "video",
-      "src": "videos/video1.mp4"
+      "src": "videos/video1.mp4",
+      "color": "green"
     },
     {
       "enabled": true,
       "label": "Evacuation",
       "type": "slideshow",
-      "src": "bild1/"
+      "src": "bild1/",
+      "color": "red"
     },
     {
       "enabled": true,
-      "label": "Lock down",
+      "label": "Broadcast cut off",
       "type": "slideshow",
-      "src": "bild2/"
+      "src": "bild2/",
+      "color": "amber"
     },
     {
       "enabled": true,
-      "label": "Artist missing",
+      "label": "Show Cancel",
       "type": "slideshow",
-      "src": "bild3/"
+      "src": "bild3/",
+      "color": "amber"
     },
     {
       "enabled": true,
-      "label": "Weather Alarm",
+      "label": "Lock Down",
       "type": "slideshow",
-      "src": "bild4/"
+      "src": "bild4/",
+      "color": "red"
     },
     {
-      "enabled": false,
-      "label": "Notice 5",
+      "enabled": true,
+      "label": "Weather Alert",
       "type": "slideshow",
-      "src": "bild5/"
+      "src": "bild5/",
+      "color": "amber"
     },
     {
-      "enabled": false,
-      "label": "Notice 6",
-      "type": "slideshow",
-      "src": "bild6/"
+      "enabled": true,
+      "label": "Eco Talk",
+      "type": "video",
+      "src": "videos/video4.mp4",
+      "color": "blue"
     },
     {
       "enabled": false,
       "label": "Notice 7",
       "type": "slideshow",
-      "src": "bild7/"
+      "src": "bild7/",
+      "color": "blue"
     },
     {
       "enabled": false,
       "label": "Notice 8",
       "type": "slideshow",
-      "src": "bild8/"
+      "src": "bild8/",
+      "color": "blue"
     },
     {
       "enabled": false,
       "label": "Notice 9",
       "type": "slideshow",
-      "src": "bild9/"
+      "src": "bild9/",
+      "color": "blue"
     },
     {
       "enabled": false,
       "label": "Notice 10",
       "type": "slideshow",
-      "src": "bild10/"
+      "src": "bild10/",
+      "color": "blue"
     },
     {
       "enabled": false,
       "label": "Video2",
       "type": "video",
-      "src": "videos/video2.mp4"
+      "src": "videos/video2.mp4",
+      "color": "grey"
     },
     {
       "enabled": false,
       "label": "Video3",
       "type": "video",
-      "src": "videos/video3.mp4"
+      "src": "videos/video3.mp4",
+      "color": "grey"
     },
     {
       "enabled": false,
       "label": "Video4",
       "type": "video",
-      "src": "videos/video4.mp4"
+      "src": "videos/video4.mp4",
+      "color": "grey"
     },
     {
       "enabled": false,
       "label": "Video5",
       "type": "video",
-      "src": "videos/video5.mp4"
+      "src": "videos/video5.mp4",
+      "color": "grey"
     },
     {
       "enabled": false,
       "label": "Playlist",
       "type": "playlist",
-      "src": ""
+      "src": "",
+      "color": "green"
     }
   ]
 }

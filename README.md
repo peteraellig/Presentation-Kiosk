@@ -1,355 +1,39 @@
-# Presentation Kiosk 1.4.7
+# Presentation Kiosk 3.15
 
-[**Full manual: Kiosk_Manual_English.pdf**](Manual/Kiosk_Manual_English.pdf)
+Presentation Kiosk lets an event operator switch a venue screen between a sponsor loop, an announcement and prepared emergency slides. The remote shows a preview of the current output so the operator can confirm which message is on air.
 
-## Control safety messages simply, quickly, and flexibly
+![Kiosk 3 remote control with Evacuation on air and the active English evacuation slide visible below the program buttons](docs/kiosk.png)
 
-Presentation Kiosk provides a straightforward way to display warning and
-safety messages on public screens.
+## Download and first start
 
-### The problem: safety communication at temporary events
+[Download the standard Windows x64 installer for Kiosk 3.15 (351 MB)](https://github.com/peteraellig/Presentation-Kiosk/releases/download/v3.15/Kiosk3_Setup_v3.15.exe)
 
-Large temporary events such as festivals, open-air events, sports events, and
-trade fairs repeatedly face the same challenge:
+This release provides the **standard installer**. It includes the kiosk application and example media. On a new PC, leave the dependency and Firefox options selected and connect to the internet during setup. Setup downloads the required components, including Python 3.12, its packages and the runtimes for OMT. After setup, the kiosk can operate on the local event network without internet access.
 
-> How can safety messages be delivered to the audience quickly and reliably
-> during an emergency when no permanent infrastructure is available?
+1. Run `Kiosk3_Setup_v3.15.exe` as administrator on the presentation PC. The default installation folder is `C:\kiosk3`.
+2. Launch **Kiosk 3 Start**. Firefox opens the presentation full screen. A Chrome launcher is also available for PCs with Chrome installed.
+3. On the kiosk PC, open **http://localhost:53101/admin**. Set the initial admin password, sign in and set a remote-control password before connecting operators.
+4. From the control desk, open `http://<kiosk-ip>:53101/remote` and sign in as `admin` with the remote password. For LAN access, allow the kiosk firewall rule during setup.
 
-Permanent venues often have dedicated systems installed for this purpose.
-Temporary events usually do not. Teams are therefore forced to improvise,
-often using a locally connected and difficult-to-reach computer running a
-PowerPoint presentation that cannot be controlled centrally.
+**Moving from 1.4.x?** Keep a copy of your existing media and button configuration. Kiosk 3 uses port **53101**. Update control-desk bookmarks and API calls, and check that each button points to the intended file or folder before going live.
 
-### The solution
+## Operating the kiosk
 
-Presentation Kiosk is a network-based system designed for simple communication
-in exceptional situations. It is reliable, flexible, and ready for immediate
-use once the event media has been prepared.
+| Interface | Use |
+| --- | --- |
+| Presentation · `/` | Full-screen output for the venue display. An optional OMT output can be configured in Admin. |
+| Remote · `/remote` | Select an enabled program and check the on-air preview. Red buttons ask for a second tap. |
+| Admin · `/admin` | Configure buttons, remote credentials, slideshow timing, the nightly reset, Stream Deck input and API access. |
+| API help · `/static/api_help.html` | View commands such as `/api?Function=bild1` and their media assignments. Configure the API switch and permitted addresses in Admin. |
 
-### Key benefits
+Place videos in `static/videos`, playlist clips in `static/videos_playlist` and slideshow images in folders such as `static/bild1`. In **Admin → Slideshow timing**, each folder has one duration from **1 to 10 seconds per image** (default 3). Remote, Stream Deck and API selections use that same timing. A single image stays on screen.
 
-#### Central control
+Stream Deck input starts locked. Enable it in Admin or press the four corner keys together, then release them before repeating. On the Stream Deck Original, three corner keys can register as four and toggle the lock.
 
-Safety messages can be triggered from any authorized device with a web browser
-on the same network, either from the event control room or from a mobile
-position on site.
+## Source and earlier documentation
 
-#### Password protected
+The Python server, launcher, Stream Deck driver, web interfaces and Inno Setup definition are included here. The source checkout includes sample media. The standard installer includes additional videos. To rebuild with the same media, copy the installed MP4 files to the corresponding source folders and compile [Installer/Kiosk3.iss](Installer/Kiosk3.iss) with Inno Setup 7.
 
-The control interfaces are protected and available only to authorized users.
+The [archived 1.4.x manuals](https://github.com/peteraellig/Presentation-Kiosk/tree/57cd1a60663b1801028799fdd63ad99e0038df7b/Manual) document the previous version.
 
-#### Minimal hardware, maximum effect
-
-A small Windows PC is sufficient. Connect its HDMI output to the video control
-system for the public screens, and the system is ready to operate.
-
-#### Ready for immediate use
-
-Once the prepared messages, images, and videos have been copied to the system
-and configured, they can be displayed without additional production software.
-
-> **Important:** Presentation Kiosk is designed exclusively to display finished
-> content. It does not edit or create media. Existing content can, however, be
-> replaced or updated directly on site at any time.
-
-#### Independent of the internet
-
-After installation, the system operates entirely within the local event
-network. An internet connection is not required during operation.
-
-#### Local control when required
-
-The system can also be operated locally with a Stream Deck when no external
-network connection is available.
-
-### Conclusion
-
-**Maximum safety with minimal effort.**
-
-Presentation Kiosk helps event teams respond quickly and reliably when it
-matters most.
-
----
-
-## Technical overview
-
-A local alert and presentation system for temporary events, spontaneous
-operations, and ad-hoc crisis management.
-
-The system displays videos, images, slideshows, and playlists on a presentation
-screen. Content can be controlled centrally through a simple web interface or,
-optionally, an Elgato Stream Deck. Changes are distributed to all connected
-clients in real time.
-
-> The project is designed to be simple, self-explanatory, and location
-> independent, requiring as little prior training as possible.
-
-## Installation and startup
-
-The complete installation guide is available in
-[Installer/README.md](Installer/README.md).
-
-Quick start:
-
-1. Copy the project folder to `C:\kiosk`.
-2. Run `Installer\Install_Kiosk.cmd` as administrator.
-3. After installation, launch `C:\kiosk\kiosk.bat`.
-4. Use the Firefox kiosk window that opens automatically.
-
-The project explicitly uses **Python 3.12.6** and tested, pinned package
-versions.
-
-## Interfaces
-
-### Presentation
-
-The presentation interface runs in Firefox in full-screen kiosk mode. It
-receives media changes through Socket.IO and displays individual images,
-videos, slideshows, or playlists.
-
-![Presentation output](Manual/presentation.png)
-
-Local addresses:
-
-- `http://localhost:53100/`
-- `http://localhost:53100/presentation`
-- `http://localhost:53100/presentation.html`
-
-### Remote control
-
-The browser-based Remote interface displays enabled media as clear control
-buttons. Changes are applied immediately to the presentation. It also provides
-previews for slideshows and videos.
-
-![Remote control](Manual/remote.png)
-
-Address:
-
-```text
-http://<KIOSK-IP>:53100/remote
-```
-
-Missing media is marked and cannot be started. Instead, the interface displays
-a message containing the expected file or directory path.
-
-### Admin dashboard
-
-The Admin dashboard is used for technical monitoring and configuration. It
-shows:
-
-- the currently active medium;
-- presentation and Remote connection status;
-- the server heartbeat;
-- the scheduled default medium;
-- button assignments;
-- Stream Deck lock status.
-
-![Admin dashboard](Manual/admin.png)
-
-Address:
-
-```text
-http://<KIOSK-IP>:53100/admin
-```
-
-Missing media files and empty media directories are highlighted in the Admin
-panel. When the configuration is saved, the previous `button_config.json` is
-backed up automatically in `Backups`. The latest 20 backups are retained.
-
-### Password protection
-
-The Remote and Admin interfaces are protected by a username and password by
-default. The credentials must be changed in `app.py` before production use.
-
-![Password prompt](Manual/password.png)
-
-## System architecture
-
-The Kiosk system has a modular architecture:
-
-```text
-Remote / Admin / Stream Deck
-             │
-             ▼
-      Flask + Socket.IO
-           app.py
-             │
-             ▼
-    Presentation browser
-```
-
-### Server — `app.py`
-
-The Python server is the central component of the system:
-
-- provides the Presentation, Remote, and Admin interfaces;
-- manages the currently active medium;
-- synchronizes clients in real time through Socket.IO;
-- monitors connections using a heartbeat;
-- starts a default medium at a configured time;
-- verifies whether configured media is available;
-- backs up changes to the button configuration.
-
-The server listens on port `53100` by default.
-
-### Presentation interface — `static/presentation.html`
-
-- runs in the browser on the presentation computer;
-- starts and stops images, videos, slideshows, and playlists;
-- briefly displays the IP address and port during startup;
-- reports the current presentation status to the server.
-
-### Remote interface — `static/remote.html`
-
-- loads enabled buttons dynamically from `button_config.json`;
-- starts media through Socket.IO;
-- displays previews and the current presentation status;
-- blocks configured but missing media.
-
-### Admin interface — `static/admin.html`
-
-- displays server and client status;
-- edits button assignments, labels, types, and media paths;
-- highlights missing media;
-- locks or unlocks Stream Deck input.
-
-### Stream Deck driver — `app_streamdeck.py`
-
-The separate Python process integrates a compatible Elgato Stream Deck:
-
-- reads button assignments from `button_config.json`;
-- renders labels and active states on the keys;
-- sends local API commands to the server;
-- reconnects automatically after server or USB interruptions;
-- starts with input locked and initially acts as a status display.
-
-## Communication
-
-### Socket.IO
-
-Socket.IO provides real-time communication between the server, Presentation,
-Remote, Admin, and the Stream Deck driver. Important events include:
-
-- `show_media` — change the active medium;
-- `slideshow_image` — report the current slideshow image;
-- `heartbeat_request` / `heartbeat_response` — check the connection;
-- `reload_config` — reload button assignments;
-- `set_streamdeck_input_lock` — lock or unlock Stream Deck input.
-
-### Local HTTP API
-
-The Stream Deck uses:
-
-```text
-http://localhost:53100/api?Function=<FUNCTION>
-```
-
-Example functions include `video1`, `bild3`, `playlist`, and `reset`.
-
-For security, the API accepts requests only from the local Kiosk computer
-(`127.0.0.1` or `::1`). External devices cannot call this API directly.
-
-## Media and button assignments
-
-All presentation media is stored below `static`:
-
-| Path | Purpose |
-|---|---|
-| `static/videos` | individual videos |
-| `static/videos_playlist` | continuous video playlist |
-| `static/bild1` through `static/bild10` | images used for alerts and slideshows |
-| `static/Message Templates` | templates for new alert graphics |
-
-The `button_config.json` file defines:
-
-- whether a button is enabled;
-- its label;
-- the media type (`video`, `slideshow`, or `playlist`);
-- the associated file or directory path.
-
-Media can be created on location and copied into the prepared directories. Only
-the entries required for the current event need to be enabled in the Admin
-panel.
-
-## Scheduler
-
-The server can automatically start a configured default medium at a specified
-time each day. This can be used to return to a sponsor or advertising loop
-after an event or alert message.
-
-The `SCHEDULE_TIME` and `SCHEDULE_PROGRAM` settings are located in `app.py`.
-
-## SDI output
-
-If an SDI output is required, the HDMI signal from the presentation computer
-can be connected to existing video infrastructure through an HDMI-to-SDI
-converter.
-
-Typical procedure on Windows 11:
-
-1. Connect the presentation computer to the HDMI-to-SDI converter.
-2. Select the relevant HDMI output in **Display settings**.
-3. Set the resolution to, for example, `1920 × 1080`.
-4. Open the adapter properties under **Advanced display**.
-5. Use **List all modes** and select `1080i, 50 Hz` where available.
-
-The available modes depend on the graphics card and driver. If only `1080p50`
-is available, a suitable cross converter is required to produce a true
-`1080i50` signal.
-
-## Technologies
-
-- Python 3.12.6
-- Flask
-- Flask-SocketIO
-- Socket.IO
-- Eventlet
-- psutil
-- Pillow
-- StreamDeck SDK
-- HIDAPI
-- HTML, CSS, and JavaScript
-- Mozilla Firefox in kiosk mode
-
-The complete set of tested package versions is listed in
-`Installer/requirements.txt`.
-
-## Project structure
-
-```text
-C:\kiosk
-├── app.py
-├── app_streamdeck.py
-├── button_config.json
-├── kiosk.bat
-├── Installer\
-├── Manual\
-├── static\
-├── Backups\        # generated automatically
-├── .venv\          # generated automatically
-├── .vs\            # Visual Studio data only
-└── __pycache__\    # generated Python cache
-```
-
-`.venv`, `.vs`, `__pycache__`, `Backups`, and temporary files are not required
-in the Git repository.
-
-## Security notes
-
-- Change the default credentials before deployment.
-- Use Remote and Admin only on a trusted production network.
-- The Stream Deck API is available locally only.
-- Stream Deck input remains locked until it is enabled in the Admin panel.
-
-## Documentation
-
-- [Installation manual](Installer/README.md)
-- [Offline package preparation](Installer/Packages/README.txt)
-- Additional PDF documentation is available in `Manual`.
-
-## License
-
-This project is released under the [BSD Zero Clause License (0BSD)](LICENSE).
-You may use, copy, modify, and distribute it for any purpose, with or without
-fee, and without attribution.
-
+Project code is distributed under the [0BSD license](LICENSE). See the [third-party notices](licence/THIRD-PARTY-NOTICES.txt) for OMT.

@@ -19,160 +19,23 @@
       cursor: none;
     }
     
-    #img, #vid { 
-      display: none; 
-      max-width: 100vw; 
-      max-height: 100vh; 
-      cursor: none; 
+    /* picture and video fill the screen (smaller sources, e.g. 720p, are scaled up, aspect ratio kept) */
+    #stage img, #stage video {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      object-fit: contain;
+      cursor: none;
     }
   </style>
 </head>
 <body>
-  <img id="img" alt="Bild">
-  <video id="vid" autoplay playsinline style="background:#000;"></video>
+  <div id="stage"></div>
+  <button id="enableSound" hidden style="position:fixed;bottom:16px;left:16px;cursor:pointer;padding:8px 12px">Ton aktivieren</button>
     <div id="serverIpBadge" style="position: fixed; right: 16px; bottom: 16px; background: rgba(0,0,0,0.65); color: #fff; font: 14px/1.4 sans-serif; padding: 8px 12px; border-radius: 8px; z-index: 9999; display:none; white-space: pre-line;">
     </div>
-    </div>
+  <script src="/static/player.js"></script>
   <script>
-    const socket = io();
-    socket.emit('register_presentation');
-
-    const img = document.getElementById('img');
-    const vid = document.getElementById('vid');
-    const ipBadge = document.getElementById('serverIpBadge');
-    let slideshowTimer = null, slideshowFiles = [], slideshowIdx = 0, slideshowFolder = null;
-    let playlistFiles = [], playlistIdx = 0, playlistActive = false;
-
-    function stopSlideshow() {
-      if (slideshowTimer) clearInterval(slideshowTimer);
-      slideshowTimer = null;
-      slideshowFiles = [];
-      slideshowIdx = 0;
-      slideshowFolder = null;
-    }
-
-    function stopPlaylist() {
-      playlistActive = false;
-      playlistFiles = [];
-      playlistIdx = 0;
-      vid.removeEventListener('ended', playlistNextHandler);
-    }
-
-    function showImage(src) {
-      stopSlideshow();
-      stopPlaylist();
-       stopVideo(); 
-      vid.pause(); vid.style.display = "none";
-      img.src = "static/" + src;
-      img.style.display = "block";
-    }
-
-      function stopVideo() {
-      vid.pause();
-      vid.removeAttribute('src'); // Quelle kappen, damit wirklich Ruhe ist
-      vid.load();                 // Media-Element zurücksetzen
-      vid.style.display = "none";
-    }
-
-    function showVideo(src) {
-      stopSlideshow();
-      stopPlaylist();
-      img.style.display = "none";
-      vid.src = "static/" + src;
-      vid.style.display = "block";
-      vid.loop = true;        // Ensures loop for single videos!
-      vid.muted = false;       // Autoplay
-      vid.volume = 1.0;
-      vid.play().catch(async (e) => {
-        console.warn("Autoplay mit Ton blockiert, versuche Workaround:", e);
-        // Fallback: kurz stumm starten, dann wieder laut
-        vid.muted = true;
-        try { await vid.play(); } catch {}
-        setTimeout(() => { vid.muted = false; }, 100);
-        });
-    }
-
-
-    async function showSlideshow(folder) {
-      stopSlideshow();
-      stopPlaylist();
-      stopVideo(); 
-      img.style.display = "block";
-      vid.style.display = "none";
-      slideshowFolder = folder;
-      let files = [];
-      try {
-        const resp = await fetch(`/filelist?folder=${encodeURIComponent(folder)}`);
-        files = await resp.json();
-      } catch(e) {}
-      if (files.length === 0) { img.style.display = "none"; return; }
-      slideshowFiles = files;
-      slideshowIdx = 0;
-      function showNext() {
-        img.src = "static/" + folder + slideshowFiles[slideshowIdx];
-        socket.emit('slideshow_image', { folder, file: slideshowFiles[slideshowIdx] });
-        slideshowIdx = (slideshowIdx + 1) % slideshowFiles.length;
-      }
-      showNext();
-      // wie lange wird ein slide gezeigt (1000 = 1 Minute)
-      slideshowTimer = setInterval(showNext, 3000);
-    }
-
-    // Handler zum nächsten Video in der Playlist
-    function playlistNextHandler() {
-      if (!playlistActive) return;
-      playlistIdx = (playlistIdx + 1) % playlistFiles.length;
-      vid.src = "static/videos_playlist/" + playlistFiles[playlistIdx];
-      vid.play();
-    }
-
-  async function showVideoPlaylist() {
-      stopSlideshow();
-      stopPlaylist();
-      img.style.display = "none";
-      vid.style.display = "block";
-
-      let files = [];
-      try {
-        const resp = await fetch(`/filelist?folder=videos_playlist/`);
-        files = await resp.json();
-      } catch(e) {}
-      files = files.filter(f => f.toLowerCase().endsWith('.mp4'));
-      if (files.length === 0) { vid.style.display = "none"; return; }
-
-      playlistFiles = files;
-      playlistIdx = 0;
-      playlistActive = true;
-
-      vid.src = "static/videos_playlist/" + playlistFiles[playlistIdx];
-      vid.muted = false;        // <-- Ton an
-      vid.volume = 1.0;
-      vid.loop = false;
-
-      vid.play().catch(async (e) => {
-        console.warn("Autoplay (Playlist) blockiert:", e);
-        vid.muted = true;
-        try { await vid.play(); } catch {}
-        setTimeout(() => { vid.muted = false; }, 100);
-      });
-
-      vid.removeEventListener('ended', playlistNextHandler);
-      vid.addEventListener('ended', playlistNextHandler);
-    }
-
-    socket.on('show_media', (data) => {
-      if (data.type === "image") showImage(data.src);
-      else if (data.type === "video") showVideo(data.src);
-      else if (data.type === "slideshow") showSlideshow(data.src);
-      else if (data.type === "playlist") showVideoPlaylist();
-    });
-
-    // Standardanzeige: Slideshow bild1
-    //showSlideshow("bild1/");
-
-    // Standardanzeige: Sponsorvideo 1
-    showVideo("videos/video1.mp4");
-    
     // === Einstellungen ===
 
     // wieviele Minuten soll die IP ab Start von app.py zu sehen sein?
@@ -205,6 +68,8 @@
 
     
 socket.on('server_info', (data) => {
+  // the OMT output instance (?omt=1) must never show the IP badge
+  if (new URLSearchParams(location.search).has('omt')) return;
   // laufende Timer stoppen
   if (ipHideTimeout) { clearTimeout(ipHideTimeout); ipHideTimeout = null; }
   if (ipCountdownInterval) { clearInterval(ipCountdownInterval); ipCountdownInterval = null; }

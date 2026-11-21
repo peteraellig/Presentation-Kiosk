@@ -33,3 +33,9 @@ Manual/*.docx
 
 # Legacy root manual remains local only.
 /KIOSK 1.4.6.pdf
+
+# Local Kiosk 3 credentials, settings, locks and release builds
+/admin_access.sqlite3*
+/*_settings.json
+/.*.lock
+/publish/

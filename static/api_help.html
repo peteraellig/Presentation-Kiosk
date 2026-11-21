@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<!-- Presentation System Kiosk 2.0 · Peter Aellig · api_help.html -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API Help – Presentation System</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    body { padding-bottom: 40px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+    td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    tr:last-child td { border-bottom: 0; }
+    code, .url { font-family: Consolas, "Courier New", monospace; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 2px 7px; font-size: .9rem; word-break: break-all; }
+    pre { background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; overflow-x: auto; font-family: Consolas, monospace; font-size: .9rem; margin: 8px 0 0; }
+    p { line-height: 1.5; margin: 0 0 10px; }
+    .muted { color: var(--muted); }
+    .btn.copy { padding: 4px 12px; font-size: .8rem; }
+    .scroll { overflow-x: auto; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar"><h1>API Help</h1></div>
+
+  <div class="card">
+    <h2>How it works</h2>
+    <p>The API switches the content on the presentation screen with a simple HTTP request. No login is needed, but access can be limited to certain IP addresses in the admin page (card "API access").</p>
+    <p>Base address of this server:</p>
+    <p><span class="url" id="base"></span></p>
+    <p>Format (GET request):</p>
+    <p><code>/api?Function=<em>command</em></code></p>
+    <p class="muted">The command is not case sensitive. It works from a browser, Bitfocus Companion (HTTP GET), vMix, curl and similar tools.</p>
+  </div>
+
+  <div class="card">
+    <h2>Commands</h2>
+    <p>Set the time per image in Admin → Slideshow timing (1–10 seconds, default 3). API commands and buttons use the same folder setting. Select the folder again to apply a change. Folders with multiple images loop; a single image stays on screen.</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>Function=</th><th>What it does</th><th>Button name</th><th>Test URL</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <p class="muted" style="margin-top:12px">The "Button name" column shows which button of the remote page uses the same content. A dash means the content is not assigned to a button at the moment.</p>
+  </div>
+
+  <div class="card">
+    <h2>Answer of the server</h2>
+    <p>Success (HTTP 200):</p>
+    <pre>{"status": "ok", "selected": {"src": "bild1/", "type": "slideshow"}}</pre>
+    <p style="margin-top:14px">Errors:</p>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>HTTP</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>400</td><td>Unknown command in <code>Function=</code></td></tr>
+          <tr><td>403</td><td>API is switched off, or the IP address of the sender is not on the allowed list</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Examples</h2>
+    <p>Browser or Companion:</p>
+    <pre id="ex1"></pre>
+    <p style="margin-top:14px">curl:</p>
+    <pre id="ex2"></pre>
+    <p class="muted" style="margin-top:14px">Videos only play if the file exists, for example <code>static/videos/video4.mp4</code> for <code>video4</code>. Slideshow commands show the images from the folder <code>static/bildN/</code>.</p>
+  </div>
+</div>
+
+<script>
+  const base = location.origin;
+  document.getElementById('base').textContent = base;
+  document.getElementById('ex1').textContent = base + '/api?Function=bild1';
+  document.getElementById('ex2').textContent = 'curl "' + base + '/api?Function=reset"';
+
+  const commands = [];
+  for (let i = 1; i <= 10; i++) commands.push({ f: 'bild' + i, desc: `Slideshow from folder bild${i}/ (uses the folder timing)`, src: `bild${i}/`, type: 'slideshow' });
+  for (let i = 1; i <= 10; i++) commands.push({ f: 'video' + i, desc: `Video videos/video${i}.mp4 (loops)`, src: `videos/video${i}.mp4`, type: 'video' });
+  commands.push({ f: 'playlist', desc: 'All videos of the folder videos_playlist/ one after the other (loops)', type: 'playlist', src: '' });
+  commands.push({ f: 'reset', desc: 'Back to the default program (sponsor video)', type: 'reset', src: null });
+
+  function esc(s) {
+    return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  async function render() {
+    let buttons = [];
+    try { buttons = (await (await fetch('/button_config')).json()).buttons || []; } catch (e) {}
+    const rows = document.getElementById('rows');
+    commands.forEach(c => {
+      const btn = buttons.find(b => b.enabled && b.type === c.type && (c.type === 'playlist' || b.src === c.src));
+      const url = base + '/api?Function=' + c.f;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><code>${esc(c.f)}</code></td>
+        <td>${esc(c.desc)}</td>
+        <td>${btn ? esc(String(btn.label).replace(/\\n/g, ' ')) : '<span class="muted">–</span>'}</td>
+        <td><button class="btn secondary copy" type="button">Copy URL</button> <a href="${esc(url)}" target="_blank" style="color:var(--blue);margin-left:8px">Test</a></td>`;
+      tr.querySelector('button').onclick = async function () {
+        try { await navigator.clipboard.writeText(url); this.textContent = 'Copied'; }
+        catch (e) { prompt('Copy this URL:', url); }
+        setTimeout(() => this.textContent = 'Copy URL', 1500);
+      };
+      rows.appendChild(tr);
+    });
+  }
+  render();
+</script>
+</body>
+</html>

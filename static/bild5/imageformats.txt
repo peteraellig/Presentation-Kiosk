@@ -1,2 +1,0 @@
-images can be:
-'.jpg', '.jpeg', '.png', '.gif', '.bmp'

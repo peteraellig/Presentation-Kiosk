@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<!-- Presentation System Kiosk 2.0 · Peter Aellig · remote.html -->
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Remote – Presentation System</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/socket.io.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <h1>Remote Control</h1>
+    <div class="pills">
+      <span class="pill" id="pill-server"><span class="dot"></span>Server</span>
+      <span class="pill" id="pill-screen"><span class="dot"></span>Presentation screen</span>
+      <span class="pill" id="pill-omt"><span class="dot"></span>OMT</span>
+    </div>
+  </div>
+
+
+
+  <div class="card">
+    <h2>Select content</h2>
+    <div class="media-grid" id="button-container"></div>
+  </div>
+
+  <div class="card live">
+    <p class="now-playing">On screen: <strong id="now-label">-</strong></p>
+    <div class="preview" id="preview">No preview</div>
+  </div>
+</div>
+
+<div class="footer" id="footer"><div class="banner" id="status" role="alert"></div>Presentation System Kiosk 2.0 · Peter Aellig · <span id="clock"></span></div>
+
+<script>
+  const socket = io();
+  const previewDiv = document.getElementById('preview');
+  const statusDiv = document.getElementById('status');
+  const container = document.getElementById('button-container');
+  const nowLabel = document.getElementById('now-label');
+  const CONFIRM_MS = 3000;   // Zeit für die zweite Bestätigung bei roten Buttons
+  let operatorReady = false;
+  let previewKey = null;
+  let commandError = '';
+  let current = { type: null, src: null };
+  let configButtons = [];
+
+  function esc(s) {
+    return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function setPill(id, state, text) {
+    const el = document.getElementById(id);
+    el.className = 'pill ' + state;
+    el.lastChild.textContent = text;
+  }
+
+  function sendButton(id) {
+    if (!socket.connected || !operatorReady) return;
+    commandError = '';
+    socket.timeout(4000).emit('select_button', id, (error, reply) => {
+      if (error || reply?.status !== 'ok') {
+        commandError = reply?.message || 'Command was not confirmed';
+        statusDiv.textContent = commandError;
+        statusDiv.style.display = 'block';
+      }
+    });
+  }
+
+  function markActive() {
+    let label = current.src || current.type || '-';
+    container.querySelectorAll('.media-btn').forEach(b => {
+      const t = b.dataset.type, s = b.dataset.src;
+      const on = (!current.button_id || b.dataset.id === current.button_id) &&
+        current.type === t && (t === 'playlist' || current.src === s);
+      b.classList.toggle('active', on);
+      if (on) label = b.dataset.label;
+    });
+    nowLabel.textContent = label;
+  }
+
+  async function loadButtons() {
+    try {
+      const resp = await fetch('/button_config');
+      const config = await resp.json();
+      configButtons = config.buttons || [];
+      container.innerHTML = '';
+      configButtons.forEach(cfg => {
+        if (!cfg.enabled) return;
+        const b = document.createElement('button');
+        const label = String(cfg.label || '').replace(/\\n/g, '\n');
+        b.className = 'media-btn c-' + (cfg.color || 'blue');
+        b.textContent = label;
+        b.disabled = !operatorReady;
+        b.dataset.id = cfg.id;
+        b.dataset.type = cfg.type;
+        b.dataset.src = cfg.src || '';
+        b.dataset.label = label.replace(/\n/g, ' ');
+        const needsConfirm = cfg.color === 'red';
+        let timer = null;
+        b.addEventListener('click', () => {
+          if (needsConfirm && !b.classList.contains('confirm')) {
+            b.classList.add('confirm');
+            b.textContent = 'Tap again to confirm';
+            timer = setTimeout(() => { b.classList.remove('confirm'); b.textContent = label; }, CONFIRM_MS);
+            return;
+          }
+          clearTimeout(timer);
+          b.classList.remove('confirm');
+          b.textContent = label;
+          sendButton(cfg.id);
+        });
+        container.appendChild(b);
+      });
+      markActive();
+    } catch (e) {
+      console.error('Button config could not be loaded:', e);
+    }
+  }
+
+  function showPreview(media, file) {
+    const key = JSON.stringify([media?.revision, file]);
+    if (previewKey === key) return;
+    previewKey = key;
+    if (!media || !file) {
+      previewDiv.textContent = 'No preview';
+      return;
+    }
+    const video = media.type === 'video' || media.type === 'playlist';
+    const element = document.createElement(video ? 'video' : 'img');
+    if (video) {
+      element.muted = true;
+      element.autoplay = element.loop = element.playsInline = true;
+    }
+    element.src = '/static/' + file.split('/').map(encodeURIComponent).join('/');
+    previewDiv.replaceChildren(element);
+  }
+
+  socket.on('connect', () => {
+    setPill('pill-server', '', 'Connecting…');
+    socket.emit('register_remote', result => {
+      // Reload through the existing HTTP login when the server has a new session key.
+      if (result?.authorized === false) { location.reload(); return; }
+      operatorReady = true;
+      setPill('pill-server', 'ok', 'Server connected');
+      loadButtons();
+      socket.emit('get_presentation_status');
+    });
+  });
+
+  socket.on('disconnect', () => {
+    operatorReady = false;
+    container.querySelectorAll('button').forEach(button => { button.disabled = true; });
+    setPill('pill-server', '', 'Server not reachable');
+    setPill('pill-screen', '', 'Presentation screen unknown');
+    setPill('pill-omt', '', 'OMT unknown');
+    current = {}; markActive(); showPreview(null, '');
+    statusDiv.textContent = 'No connection to the server!';
+    statusDiv.style.display = 'block';
+  });
+
+  socket.on('remote_credentials_changed', () => location.reload());
+  socket.on('reload_config', loadButtons);
+
+  setInterval(() => { if (operatorReady) socket.emit('get_presentation_status'); }, 5000);
+
+  socket.on('presentation_status', (data) => {
+    setPill('pill-screen', data.active ? 'ok' : '', data.active ? 'Presentation screen connected' : 'Presentation screen offline');
+    setPill('pill-omt', data.omt ? 'ok' : '', data.omt ? 'OMT connected' : 'OMT offline');
+    const screen = data.screen;
+    const messages = [];
+    if (!screen) messages.push('Presentation screen offline');
+
+    if (screen?.phase === 'error') messages.push('Presentation screen: ' + screen.message);
+    if (data.omt_output?.phase === 'error') messages.push('OMT: ' + data.omt_output.message);
+    if (commandError) messages.push(commandError);
+    statusDiv.textContent = messages.join(' · ');
+    statusDiv.style.display = messages.length ? 'block' : 'none';
+    current = screen?.media || {};
+    markActive();
+    showPreview(screen?.media, screen?.file);
+  });
+
+  function updateClock() {
+    document.getElementById('clock').textContent = new Date().toLocaleTimeString('de-CH');
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+</script>
+</body>
+</html>

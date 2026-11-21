@@ -1,0 +1,9 @@
+Third-party licenses used by Kiosk 3
+====================================
+
+Open Media Transport (OMT)  -  MIT License
+  File: OMT-LICENSE.txt
+  Used by the "Presenter OMT" output (libomt.dll, libvmx.dll) to send the presenter picture and sound as OMT.
+  Project: https://github.com/openmediatransport
+
+The license text must stay with every copy of the software. Do not delete this folder.

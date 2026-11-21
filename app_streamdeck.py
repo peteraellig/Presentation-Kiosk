@@ -1,43 +1,40 @@
-# Presentation System v1.4.7 · July 2026 · Peter Aellig ·
+# Presentation System v1.4.6 · July 2025 · Peter Aellig ·
 # Streamdeck Driver
-# NOTE: if you change the Port Adress in the main application, you have to change it in all applications!
-# Streamdeck sends Kiosk-API commands, buttons are generated from the database
+# The server supplies the same configured slots used by Remote Control.
 
 import time
 import requests
 import threading
 import queue
+from kiosk_runtime import SERVER_URL, instance_lock
 import socketio
-import json
-import os
 import platform
-import signal
-import sys
 from PIL import Image, ImageDraw, ImageFont
 from StreamDeck.DeviceManager import DeviceManager
 from StreamDeck.ImageHelpers import PILHelper
 
-CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'button_config.json')
 STREAMDECK_INPUT_LOCK = True  # Gesperrt beim Start
 
-# change PORT HERE AND AT THE END OF THIS FILE
-API_BASE_URL = "http://localhost:53100/api?Function="
+
 
 print("\n-------------------------------------------------------------")
-print("\n     Presentation Kiosk Streamdeck Driver 1.4.7 Peter Aellig ")
+print("\n     ESC Kiosk Streamdeck Driver 1.4.6 Peter Aellig           ")
 print("\n-------------------------------------------------------------")
 
 
 def safe_close_deck():
     global deck
-    try:
-        if deck:
-            deck.reset()
-            deck.close()
-    except Exception:
-        pass
-    finally:
-        deck = None
+    old, deck = deck, None
+    if old is not None:
+        try:
+            old.reset()
+        except Exception:
+            pass
+        try:
+            old.close()
+        except Exception as error:
+            print(f"Stream Deck close: {error}")
+
 
 def set_streamdeck_brightness(percent):
     global deck
@@ -54,7 +51,7 @@ def try_init_deck():
     # Versucht ein Stream Deck zu finden und zu initialisieren.
     # Gibt True zurück, wenn initialisiert wurde, sonst False.
     
-    global deck, button_mapping
+    global deck
     try:
         decks = DeviceManager().enumerate()
         if not decks:
@@ -70,12 +67,11 @@ def try_init_deck():
         print(f"Stream Deck erkannt: {deck.key_count()} Tasten")
 
         # Buttons laden & Callback setzen
-        button_mapping = load_button_mapping()
         print(f"Buttons geladen: {len(button_mapping)}")
-        deck.set_key_callback(button_callback)
+        deck.set_key_callback(make_button_callback(deck))
 
         # Initialzustand rendern
-        update_queue.put(-1)
+        refresh_keys()
 
         # Dem Server mitteilen, dass ein Streamdeck "da" ist
         try:
@@ -91,41 +87,8 @@ def try_init_deck():
 
 
 
-# === Button-Konfiguration: Taste → (API-Funktion, Anzeigetext) ===
-# es sind mehrzeilige Labels möglich , ein Abstand im Namen erzeugt einen CRLF"
-
-def load_button_mapping():
-    try:
-        with open(CONFIG_PATH, 'r') as f:
-            config = json.load(f)
-    except:
-        return {}
-
-    mapping = {}
-    physical_key = 0  # Start bei Taste 0
-
-    for btn in config.get("buttons", []):
-        if btn.get("enabled", False):
-            label = btn.get("label", "").replace(" ", "\n")
-            typ = btn.get("type", "")
-            src = btn.get("src", "")
-            if typ == "slideshow":
-                func = src.rstrip("/")
-            elif typ == "video":
-                func = os.path.splitext(os.path.basename(src))[0]
-            elif typ == "playlist":
-                func = "playlist"
-            else:
-                continue
-            mapping[physical_key] = (func, label)
-            physical_key += 1  # nächste Taste
-
-    return mapping
-
-
 # === Globale Objekte ===
 deck = None
-last_active_key = None
 update_queue = queue.Queue()
 sio = socketio.Client()
 button_mapping = {}
@@ -137,34 +100,38 @@ def connect():
     sio.emit("register_streamdeck")
 
 @sio.event
-def disconnect():
+def disconnect(reason=None):
+    global confirmed_media, connection_generation
+    connection_generation += 1
+    on_input_lock(True)
+    confirmed_media = None
+    refresh_keys()
     print("! Verbindung zu app.py getrennt")
 
-@sio.on("show_media")
-def on_show_media(data):
+confirmed_media = None
 
-    # reagiere nur, wenn Stream Deck verbunden ist
 
-    if deck is None:
-        return
+@sio.on("presentation_status")
+def on_status(data):
+    global confirmed_media
+    screen = data.get("screen") or {}
+    media = screen.get("media")
+    if media != confirmed_media:
+        confirmed_media = media
+        refresh_keys()
 
-    if not button_mapping:
-        return
 
-    src = data.get("src", "")
-    typ = data.get("type")
-
-    for key, (api_func, label) in button_mapping.items():
-        is_active = (
-            (typ == "video" and api_func in src) or
-            (typ == "slideshow" and api_func == src.rstrip("/")) or
-            (typ == "playlist" and api_func == "playlist") or
-            (typ == "reset" and api_func == "reset")
-        )
-
-        if is_active:
+def refresh_keys():
+    media = confirmed_media or {}
+    for key, button in button_mapping.items():
+        same_slot = not media.get("button_id") or button["id"] == media["button_id"]
+        matches = same_slot and button["type"] == media.get("type") and (
+            button["type"] == "playlist" or button.get("src") == media.get("src"))
+        if matches:
             update_queue.put(key)
-            break
+            return
+    update_queue.put(-1)
+
 
 # streamdeckdriver prüft ob es auf einen raspi oder windows läuft und passt die fonts an
 def render_key_image(deck, label, bg_color=(0, 0, 0)):
@@ -190,14 +157,11 @@ def render_key_image(deck, label, bg_color=(0, 0, 0)):
     # Mehrzeilige Labels
     lines = label.split('\n')
     line_heights = []
-    max_width = 0
 
     # Höhe und Breite jeder Zeile
     for line in lines:
         bbox = draw.textbbox((0, 0), line, font=font)
-        w = bbox[2] - bbox[0]
         h = bbox[3] - bbox[1]
-        max_width = max(max_width, w)
         line_heights.append(h)
 
     total_height = sum(line_heights) + (len(lines) - 1) * 2  # 2px Zeilenabstand
@@ -216,7 +180,9 @@ def render_key_image(deck, label, bg_color=(0, 0, 0)):
 
 @sio.on("set_streamdeck_input_lock")
 def on_input_lock(data):
-    global STREAMDECK_INPUT_LOCK
+    global STREAMDECK_INPUT_LOCK, input_generation
+    if STREAMDECK_INPUT_LOCK != bool(data):
+        input_generation += 1
     STREAMDECK_INPUT_LOCK = bool(data)
     print(f"StreamDeck Input {'gesperrt' if STREAMDECK_INPUT_LOCK else 'freigegeben'}")
 
@@ -226,15 +192,13 @@ def on_input_lock(data):
 
 
 def update_key_labels_threadsafe(active_key):
-    global last_active_key
     if deck is None:
         return
-    last_active_key = active_key
 
     key_count = deck.key_count()
     for key in range(key_count):
         if key in button_mapping:
-            api_func, label = button_mapping[key]
+            label = button_mapping[key]["label"].replace(" ", "\n")
             color = (255, 0, 0) if key == active_key else (0, 0, 0)
         else:
             label = ""
@@ -248,52 +212,86 @@ def update_key_labels_threadsafe(active_key):
 def update_worker():
     while True:
         key = update_queue.get()
+        if key is None:
+            break  # Shutdown-Signal
         try:
-            if key is None:
-                break  # Shutdown-Signal
             update_key_labels_threadsafe(key)
-        except Exception as e:
-            print(f"! StreamDeck-Anzeige konnte nicht aktualisiert werden: {e}")
-            safe_close_deck()
+        except Exception as error:
+            print(f"Stream Deck display: {error}")
         finally:
             update_queue.task_done()
 
 
-# Tastendruck-Callback 
-# http wird zuerst geschickt, ohne überprüfung, um die reaktionszeit kleinstmöglich zu halten
-def _http_fire_and_forget(url: str, timeout: float = 0.3):
-    # nicht-blockierender HTTP-Call mit kurzem Timeout
-    def _run():
+input_generation = 0
+connection_generation = 0
+presses = queue.Queue()
+
+
+def send_presses():
+    while True:
+        device, connection, generation, button_id = presses.get()
         try:
-            requests.get(url, timeout=timeout)
-        except Exception as e:
-            print(f"!  API-Fehler: {e}")
-    threading.Thread(target=_run, daemon=True).start()
+            if device is not deck or connection != connection_generation or not sio.connected:
+                continue
+            if button_id is None:
+                response = requests.post(SERVER_URL + "/_kiosk/streamdeck/toggle",
+                                         headers={"X-Kiosk-Deck": "1"}, timeout=2)
+            elif generation == input_generation and not STREAMDECK_INPUT_LOCK:
+                response = requests.post(SERVER_URL + "/api", params={"button": button_id}, timeout=2)
+            else:
+                continue
+            response.raise_for_status()
+        except requests.RequestException as error:
+            print(f"Stream Deck command failed: {error}")
+        finally:
+            presses.task_done()
 
-def button_callback(deck_obj, key, state):
-    if not state:
-        return  # Nur auf Tastendruck reagieren
 
-    if STREAMDECK_INPUT_LOCK:
-        print("Eingabe gesperrt – keine Aktion")
-        return
+def make_button_callback(device):
+    rows, cols = device.key_layout()
+    corners = {0, cols - 1, (rows - 1) * cols, rows * cols - 1} if rows >= 2 and cols >= 2 else set()
+    held = set()
+    single_press = None
+    toggled = False
+    gesture_connection = None
 
-    if key in button_mapping:
-        api_func, label = button_mapping[key]
+    def button_callback(source, key, down):
+        nonlocal single_press, toggled, gesture_connection
+        if source is not deck:
+            return
+        button = button_mapping.get(key)
+        command = None
+        if button and not STREAMDECK_INPUT_LOCK and sio.connected:
+            command = (source, connection_generation, input_generation, button["id"])
+        if key not in corners:
+            if down and command:
+                presses.put(command)
+            return
+        if down and key not in held:
+            if not held:
+                toggled = False
+                gesture_connection = connection_generation if sio.connected else None
+                single_press = command
+            else:
+                single_press = None
+            held.add(key)
+            if held == corners and not toggled:
+                toggled = True
+                if sio.connected and gesture_connection == connection_generation:
+                    presses.put((source, gesture_connection, input_generation, None))
+        elif not down and key in held:
+            held.remove(key)
+            if not held and single_press:
+                presses.put(single_press)
+            single_press = None
 
-        # Nur wenn nicht gesperrt → Button einfärben
-        update_queue.put(key)
-
-        # API aufrufen (nur wenn nicht gesperrt)
-        url = f"{API_BASE_URL}{api_func}"
-        _http_fire_and_forget(url, timeout=0.3)
-        print(f"→ {label} (API: {api_func}) aktiviert")
-
+    return button_callback
 
 
 # Main
 def main():
     # Worker starten (darf auch ohne Deck laufen)
+    threading.Thread(target=send_presses, daemon=True).start()
     threading.Thread(target=update_worker, daemon=True).start()
 
     # Beim Start einmal versuchen, ein Deck zu initialisieren
@@ -304,33 +302,18 @@ def main():
         while True:
             time.sleep(1)
 
-            if not sio.connected and getattr(sio.eio, "state", "disconnected") == "disconnected":
-                try:
-                    sio.connect("http://localhost:53100", wait_timeout=3)
-                except Exception:
-                    pass
-
-            # Prüfen, ob ein Deck angeschlossen/entfernt wurde
-            try:
-                decks = DeviceManager().enumerate()
-            except Exception as e:
-                print(f"! enumerate() Fehler: {e}")
-                decks = []
-
             if deck is None:
-                # Noch keins aktiv → versuchen zu initialisieren
                 if try_init_deck():
                     print("Stream Deck verbunden und initialisiert.")
-            else:
-                # Es war eines aktiv – prüfen, ob es verschwunden ist
-                try:
-                    deck_connected = deck.connected()
-                except Exception:
-                    deck_connected = False
-                if not deck_connected:
-                    print("! Stream Deck getrennt – wechsle in Wartemodus.")
-                    safe_close_deck()
-                    print("! Warte auf neues Stream Deck...")
+                continue
+            try:
+                attached = {device.id() for device in DeviceManager().enumerate()}
+                if deck.id() in attached:
+                    continue
+            except Exception as error:
+                print(f"Stream Deck status: {error}")
+            safe_close_deck()
+            print("Stream Deck getrennt – warte auf neues Gerät.")
     except KeyboardInterrupt:
         print("Beende...")
     finally:
@@ -341,15 +324,28 @@ def main():
 # Update 
 @sio.on("reload_config")
 def on_reload_config():
-    global button_mapping
-    button_mapping = load_button_mapping()
-    update_queue.put(-1)
+    sio.emit("register_streamdeck")
 
-# Start
+
+@sio.on("deck_layout")
+def on_layout(buttons):
+    global button_mapping
+    button_mapping = {key: button for key, button in enumerate(b for b in buttons if b.get("enabled"))}
+    refresh_keys()
+
+
+def maintain_connection():
+    while True:
+        try:
+            sio.connect(SERVER_URL, wait_timeout=5)
+            sio.wait()  # includes Socket.IO's retries after a transport loss
+        except (socketio.exceptions.ConnectionError, OSError) as error:
+            print(f"Kiosk-Server nicht erreichbar: {error}")
+        time.sleep(2)
+
+
 if __name__ == "__main__":
-    try:
-        sio.connect("http://localhost:53100", wait_timeout=3)
-    except Exception as e:
-        print(f"! Socket.IO noch nicht erreichbar: {e}")
-        print("! Verbindung wird automatisch erneut versucht.")
-    main()
+    with instance_lock("streamdeck") as first:
+        if first:
+            threading.Thread(target=maintain_connection, daemon=True).start()
+            main()

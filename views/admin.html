@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<!-- Presentation System Kiosk 2.0 · Peter Aellig · admin.html -->
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin – Presentation System</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/socket.io.min.js"></script>
+  <style>
+    .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+    .stat { background: var(--panel-2); border-radius: 10px; padding: 12px 14px; }
+    .stat .k { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+    .stat .v { font-size: 1.05rem; font-weight: 600; margin-top: 4px; word-break: break-all; }
+    .v.good { color: var(--ok); } .v.bad { color: var(--red); }
+    #heartbeat { font-family: Consolas, "Courier New", monospace; font-variant-numeric: tabular-nums; }
+    .hb-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-left: 12px; vertical-align: middle; background: var(--muted); }
+    .hb-dot.ok { background: var(--ok); }
+    .hb-dot.bad { background: var(--red); }
+    /* Herzschlag: 4 Schläge, dann Ruhe; wird bei jeder Server-Antwort neu ausgelöst */
+    .hb-dot.beat { animation: heartbeat 2.8s ease-out; }
+    @keyframes heartbeat {
+      0%, 25%, 50%, 75%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(52,209,122,0); }
+      10%, 35%, 60%, 85% { transform: scale(1.7); box-shadow: 0 0 0 6px rgba(52,209,122,.25); }
+    }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .toggle { display: inline-flex; align-items: center; gap: 8px; margin-left: auto; cursor: pointer; }
+    .toggle input { width: 20px; height: 20px; accent-color: var(--blue); }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding: 4px 6px; }
+    td { padding: 4px 6px; }
+    td input[type=text], td select {
+      width: 100%; background: var(--bg); color: var(--text);
+      border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: inherit;
+    }
+    td input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--blue); }
+    .swatch { width: 14px; height: 14px; border-radius: 50%; display: inline-block; vertical-align: middle; margin-right: 6px; }
+    .table-scroll { overflow-x: auto; }
+    .toast {
+      position: fixed; left: 50%; bottom: 70px; transform: translateX(-50%);
+      background: var(--ok); color: #04210f; font-weight: 600; padding: 10px 20px;
+      border-radius: 10px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 100;
+    }
+    .toast.show { opacity: 1; }
+    .toast.err { background: var(--red); color: #fff; }
+    .src-cell { display: flex; gap: 6px; }
+    .src-cell .btn { padding: 6px 12px; white-space: nowrap; }
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,.65); display: none; align-items: center; justify-content: center; z-index: 200; padding: 16px; }
+    .modal-bg.show { display: flex; }
+    .modal { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); width: 100%; max-width: 640px; max-height: 85vh; display: flex; flex-direction: column; }
+    .modal header { padding: 14px 18px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .modal .crumb { font-family: Consolas, monospace; color: var(--muted); font-size: .9rem; word-break: break-all; }
+    .modal .list { overflow-y: auto; padding: 8px; flex: 1; }
+    .modal .item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; cursor: pointer; }
+    .modal .item:hover { background: var(--panel-2); }
+    .modal .item .ico { width: 22px; text-align: center; }
+    .modal .item img, .modal .item video { width: 56px; height: 32px; object-fit: cover; border-radius: 4px; background: #000; }
+    .modal footer { padding: 12px 18px; border-top: 1px solid var(--line); display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+    .hint { font-size: .8rem; color: var(--muted); margin: 10px 0 0; }
+    #audio-help { color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); width: min(38rem, 90vw); max-height: 85vh; overflow: auto; }
+    #audio-help::backdrop { background: rgba(0,0,0,.65); }
+    #audio-help li { margin: .4rem 0; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <h1>Admin Dashboard</h1>
+    <button id="logout" type="button">Abmelden</button>
+  </div>
+
+  <div class="card">
+    <h2>Status</h2>
+    <div class="status-grid">
+      <div class="stat"><div class="k">Media type</div><div class="v" id="media-type">-</div></div>
+      <div class="stat"><div class="k">Media source</div><div class="v" id="media-src">-</div></div>
+      <div class="stat"><div class="k">OMT presenter</div><div class="v" id="omt-connected">-</div></div>
+      <div class="stat"><div class="k">Playback</div><div class="v" id="playback-state">-</div></div>
+      <div class="stat"><div class="k">Presentation screen</div><div class="v" id="presentation-connected">-</div></div>
+      <div class="stat"><div class="k">Remote</div><div class="v" id="remote-connected">-</div></div>
+      <div class="stat"><div class="k">Daily reset at <span id="schedule-time">--:--</span></div><div class="v" id="schedule-src">-</div></div>
+      <div class="stat"><div class="k">Server heartbeat</div><div class="v" id="hb-wrap"><span id="heartbeat">checking...</span><span class="hb-dot" id="hb-dot"></span></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Actions</h2>
+    <div class="actions">
+      <button class="btn secondary" onclick="resetToDefault()">Reset to default program</button>
+      <button class="btn secondary" onclick="triggerSchedule()">Play scheduled medium now</button>
+      <label class="toggle"><input type="checkbox" id="lock-streamdeck-input"> Allow StreamDeck control</label>
+    </div>
+    <p class="hint">Press the four outer corner keys together to unlock or lock the Stream Deck. On the Stream Deck Original, pressing any three corner keys together is enough to toggle the lock. Release all pressed keys before repeating. A single corner key selects its program on release. Dim keys indicate locked input.</p>
+  </div>
+
+  <div class="card">
+    <h2>Button configuration</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr>
+          <th>Active</th><th>Label</th><th>Type</th><th>Source (folder or file)</th><th>Color</th>
+        </tr></thead>
+        <tbody id="button-config"></tbody>
+      </table>
+    </div>
+    <p class="hint">Red buttons need a second tap on the remote (protection against accidental presses). Use "\n" in a label for a line break.</p>
+    <div class="actions" style="margin-top:14px">
+      <button class="btn" onclick="saveButtonConfig()">Save button configuration</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Slideshow timing</h2>
+    <form id="slide-times" class="actions">
+      <label>Folder <select id="slide-folder" required></select></label>
+      <label>Seconds per image <input id="slide-seconds" type="number" min="1" max="10" step="1" required></label>
+      <button class="btn" type="submit">Save timing</button>
+    </form>
+    <p class="hint">Choose 1–10 seconds per image (default 3). The next time this folder is selected, the screen and OMT output use this timing for buttons, API calls and scheduled playback. A single image stays on screen.</p>
+  </div>
+  <div class="card">
+    <h2>API access</h2>
+    <div class="actions">
+      <label class="toggle" style="margin-left:0"><input type="checkbox" id="api-enabled"> API enabled</label>
+      <label class="toggle"><input type="checkbox" id="api-restrict"> Only allow the IP addresses below</label>
+    </div>
+    <textarea id="api-allowed" rows="5" placeholder="One IP or range per line, e.g.&#10;192.168.1.50&#10;192.168.1.0/24" style="width:100%;margin-top:12px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:10px;font-family:Consolas,monospace;"></textarea>
+    <p class="hint">This computer (localhost) is always allowed. Ranges are written like 192.168.1.0/24. Example call: <code>http://&lt;server-ip&gt;:53101/api?Function=bild1</code></p>
+    <div class="actions" style="margin-top:14px">
+      <button class="btn" onclick="saveApiSettings()">Save API settings</button>
+      <button class="btn secondary" onclick="window.open('/static/api_help.html', '_blank')">API help</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>OMT output</h2>
+    <p class="hint" style="margin:0 0 12px">Sends the presenter picture and sound as OMT (video + audio) to the network, for example to the SDI Converter. The sound does not go through the Windows audio output.</p>
+    <div class="actions" style="margin-bottom:12px">
+      <label class="toggle" style="margin-left:0"><input type="checkbox" id="omt-enabled"> OMT output on</label>
+      <span class="pill" id="omt-pill"><span class="dot"></span><span id="omt-state">-</span></span>
+    </div>
+    <table style="max-width:560px">
+      <tr><td style="width:170px">Name</td><td><input type="text" id="omt-name" maxlength="60" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit"></td></tr>
+      <tr><td>Standard</td><td><select id="omt-format" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit"></select></td></tr>
+      <tr><td>Audio level (dB)</td><td><input type="number" id="omt-gain" min="-60" max="12" step="1" style="width:110px;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit"></td></tr>
+    </table>
+    <p class="hint">Source name in the network: <strong id="omt-address">-</strong>. Saving restarts the output for a moment.</p>
+    <div class="actions" style="margin-top:14px">
+      <button class="btn" onclick="saveOmt()">Save OMT settings</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Licenses</h2>
+    <p class="hint" style="margin:0 0 8px">This program uses <strong>Open Media Transport (OMT)</strong> to send the presenter output (MIT License, Copyright &copy; 2025 Open Media Transport Contributors).</p>
+    <div class="actions">
+      <a class="btn secondary" style="text-decoration:none" href="/licence/OMT-LICENSE.txt" target="_blank">OMT license text</a>
+      <a class="btn secondary" style="text-decoration:none" href="/licence/THIRD-PARTY-NOTICES.txt" target="_blank">All licenses</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Help</h2>
+    <button type="button" class="btn secondary" onclick="document.getElementById('audio-help').showModal()">No sound? / Kein Ton?</button>
+    <dialog id="audio-help" aria-labelledby="audio-help-title">
+      <h2 id="audio-help-title">Chrome · No sound? / Kein Ton?</h2>
+      <section lang="de"><h3>Deutsch</h3>
+        <p>Damit der Ton in deinem normalen Chrome-Tab auch nach einem Refresh startet, braucht die Kiosk-Adresse eine dauerhaft gespeicherte Tonfreigabe.</p>
+        <p>So setzt du sie einmalig im Chrome-Profil auf dem Präsentations-PC:</p>
+        <ol><li>Öffne <code>chrome://settings/content/sound</code>.</li>
+          <li>Klicke unter <strong>„Wiedergabe von Ton zulassen“</strong> auf <strong>„Hinzufügen“</strong>.</li>
+          <li>Trage die Adresse des Präsentationsfensters ein, zum Beispiel <code class="audio-origin">http://192.168.1.113:53101</code>.</li>
+          <li>Lade den Präsentationstab mit <kbd>F5</kbd> neu.</li></ol></section>
+      <section lang="en"><h3>English</h3>
+        <p>To play sound automatically after a refresh in a regular Chrome tab, save a sound permission for the kiosk address.</p>
+        <p>Set it once in the Chrome profile on the presentation PC:</p>
+        <ol><li>Open <code>chrome://settings/content/sound</code>.</li>
+          <li>Under <strong>Allowed to play sound</strong>, click <strong>Add</strong>.</li>
+          <li>Enter the address of the presentation window, for example <code class="audio-origin">http://192.168.1.113:53101</code>.</li>
+          <li>Press <kbd>F5</kbd> to reload the presentation tab.</li></ol></section>
+      <form method="dialog"><button type="submit" class="btn">Close / Schliessen</button></form>
+    </dialog>
+    <p class="hint" style="margin:0">Dual monitor? Move the running presentation window to the other monitor with <kbd>Shift</kbd>+<kbd>Windows</kbd>+<kbd>←</kbd>/<kbd>→</kbd>.</p>
+  </div>
+  <div class="card">
+    <h2>Nightly reset</h2>
+    <form id="schedule-form">
+      <label class="toggle"><input type="checkbox" id="night-enabled"> Switch to the selected program every day</label>
+      <div class="actions">
+        <label>Local time <input type="time" required id="night-time"></label>
+        <label>Program <select id="night-target" required></select></label>
+        <button class="btn" type="submit">Save schedule</button>
+      </div>
+    </form>
+  </div>
+  <div class="card">
+    <h2>Change remote password</h2>
+    <form class="actions" id="remote-password-form">
+      <label>New password <input type="password" required minlength="8" maxlength="256" autocomplete="new-password" id="remote-password"></label>
+      <label>Confirm password <input type="password" required autocomplete="new-password" id="remote-confirm"></label>
+      <button class="btn" type="submit">Save remote password</button>
+    </form>
+    <p class="hint">Use at least 8 characters. Sign in again with the new password in any open remote window.</p>
+  </div>
+</div>
+
+<div class="modal-bg" id="picker">
+  <div class="modal">
+    <header><strong id="picker-title">Select</strong><span class="crumb" id="picker-path">static/</span></header>
+    <div class="list" id="picker-list"></div>
+    <footer>
+      <button class="btn secondary" onclick="closePicker()">Cancel</button>
+      <button class="btn" id="picker-choose-folder" onclick="chooseCurrentFolder()">Use this folder</button>
+    </footer>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="footer ok" id="footer">Presentation System Kiosk 2.0 · Peter Aellig · <span id="clock"></span></div>
+
+<script>
+  document.getElementById('logout').onclick = async () => {
+    const response = await fetch('/admin/logout', {method: 'POST', headers: {'X-Kiosk-Admin': '1'}});
+    if (response.ok || response.status === 401) location.replace('/admin/login');
+  };
+  document.querySelectorAll('.audio-origin').forEach(el => { el.textContent = location.origin; });
+  const COLORS = ['blue', 'green', 'amber', 'red', 'grey'];
+  const socket = io();
+  let currentMedia = {};
+  let scheduledMedia = {};
+  let heartbeatTimeout = null;
+  let heartbeatStarted = false;
+
+  function esc(s) {
+    return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  const $ = id => document.getElementById(id);
+
+  function toast(msg, err) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (err ? ' err' : '');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  function setServer(ok, text) {
+    $('footer').className = 'footer ' + (ok ? 'ok' : 'fail');
+    $('heartbeat').textContent = text;
+    $('hb-wrap').className = 'v ' + (ok ? 'good' : 'bad');
+    $('hb-dot').className = 'hb-dot ' + (ok ? 'ok' : 'bad');
+  }
+
+  function beat() {
+    const dot = $('hb-dot');
+    dot.classList.remove('beat');
+    void dot.offsetWidth;          // Animation neu starten
+    dot.classList.add('beat');
+  }
+
+  function setYesNo(id, yes) {
+    const el = $(id);
+    el.textContent = yes ? 'Connected' : 'Not connected';
+    el.className = 'v ' + (yes ? 'good' : 'bad');
+  }
+
+  // ─── Button-Editor ────────────────────────────────────────────
+  async function loadConfigEditor() {
+    const config = await (await fetch('/button_config')).json();
+    const body = $('button-config');
+    body.innerHTML = '';
+    config.buttons.forEach((btn, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="checkbox" id="enable_${i}" ${btn.enabled ? 'checked' : ''}></td>
+        <td><input type="text" id="label_${i}" value="${esc(btn.label)}"></td>
+        <td><select id="type_${i}">
+          ${['slideshow', 'video', 'playlist'].map(t => `<option value="${t}" ${btn.type === t ? 'selected' : ''}>${t}</option>`).join('')}
+        </select></td>
+        <td><div class="src-cell"><input type="text" id="src_${i}" value="${esc(btn.src)}"><button class="btn secondary" type="button" onclick="openPicker(${i})">Browse…</button></div></td>
+        <td><select id="color_${i}">
+          ${COLORS.map(c => `<option value="${c}" ${(btn.color || 'blue') === c ? 'selected' : ''}>${c}</option>`).join('')}
+        </select></td>`;
+      body.appendChild(tr);
+    });
+    socket.emit('get_streamdeck_input_lock');
+  }
+
+  // ─── Auswahlfenster für Ordner/Dateien unter static/ ──────────
+  let pickerRow = null;
+  let pickerDir = '';
+  const IMG_EXT = /\.(jpe?g|png|gif|bmp)$/i;
+
+  function openPicker(i) {
+    const type = $(`type_${i}`).value;
+    if (type === 'playlist') { toast('Playlist always uses the folder videos_playlist/'); return; }
+    pickerRow = i;
+    $('picker-title').textContent = type === 'video' ? 'Select a video file' : 'Select a slideshow folder';
+    $('picker-choose-folder').style.display = type === 'slideshow' ? '' : 'none';
+    // Start im Ordner des aktuellen Eintrags
+    let cur = $(`src_${i}`).value.replace(/\\/g, '/');
+    if (type === 'video') cur = cur.includes('/') ? cur.slice(0, cur.lastIndexOf('/')) : '';
+    $('picker').classList.add('show');
+    loadDir(cur.replace(/^\/+|\/+$/g, ''));
+  }
+
+  function closePicker() { $('picker').classList.remove('show'); }
+
+  async function loadDir(path) {
+    let data;
+    try {
+      const resp = await fetch('/browse?path=' + encodeURIComponent(path));
+      if (!resp.ok) throw new Error();
+      data = await resp.json();
+    } catch (e) {
+      if (path) return loadDir('');
+      toast('Folder could not be read', true);
+      return;
+    }
+    pickerDir = data.path;
+    $('picker-path').textContent = 'static/' + (pickerDir ? pickerDir + '/' : '');
+    const type = $(`type_${pickerRow}`).value;
+    const list = $('picker-list');
+    list.innerHTML = '';
+    const add = (html, onclick) => {
+      const d = document.createElement('div');
+      d.className = 'item';
+      d.innerHTML = html;
+      d.onclick = onclick;
+      list.appendChild(d);
+    };
+    if (pickerDir) {
+      const parent = pickerDir.includes('/') ? pickerDir.slice(0, pickerDir.lastIndexOf('/')) : '';
+      add('<span class="ico">↩</span><span>.. (up)</span>', () => loadDir(parent));
+    }
+    data.dirs.forEach(d => {
+      const p = pickerDir ? pickerDir + '/' + d : d;
+      add(`<span class="ico">📁</span><span>${esc(d)}</span>`, () => loadDir(p));
+    });
+    const base = '/static/' + (pickerDir ? pickerDir + '/' : '');
+    data.files.forEach(f => {
+      const isImg = IMG_EXT.test(f);
+      if (type === 'video' && isImg) return;               // bei Video nur Videodateien anbieten
+      const thumb = isImg ? `<img src="${base}${encodeURIComponent(f)}" loading="lazy">` : '<span class="ico">🎞</span>';
+      const sel = type === 'video'
+        ? () => { $(`src_${pickerRow}`).value = (pickerDir ? pickerDir + '/' : '') + f; closePicker(); }
+        : null;                                             // bei Slideshow nur zur Ansicht
+      add(`${thumb}<span style="${sel ? '' : 'color:var(--muted)'}">${esc(f)}</span>`, sel || (() => {}));
+    });
+    if (!list.children.length) list.innerHTML = '<p class="hint" style="padding:12px">Empty folder</p>';
+  }
+
+  function chooseCurrentFolder() {
+    if (!pickerDir) { toast('Please open a folder first', true); return; }
+    $(`src_${pickerRow}`).value = pickerDir + '/';
+    closePicker();
+  }
+
+  async function loadApiSettings() {
+    try {
+      const s = await (await fetch('/api_settings')).json();
+      $('api-enabled').checked = s.enabled;
+      $('api-restrict').checked = s.restrict;
+      $('api-allowed').value = (s.allowed || []).join('\n');
+    } catch (e) { toast('API settings could not be loaded', true); }
+  }
+
+  async function saveApiSettings() {
+    const allowed = $('api-allowed').value.split(/[\n,; ]+/).map(x => x.trim()).filter(Boolean);
+    try {
+      const resp = await fetch('/api_settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Kiosk-Admin': '1' },
+        body: JSON.stringify({ enabled: $('api-enabled').checked, restrict: $('api-restrict').checked, allowed })
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.message || resp.status);
+      toast('API settings saved');
+      loadApiSettings();
+    } catch (e) {
+      toast(e.message || 'Saving failed', true);
+    }
+  }
+
+  async function saveButtonConfig() {
+    const rows = $('button-config').children.length;
+    const buttons = [];
+    for (let i = 0; i < rows; i++) {
+      buttons.push({
+        enabled: $(`enable_${i}`).checked,
+        label: $(`label_${i}`).value,
+        type: $(`type_${i}`).value,
+        src: $(`src_${i}`).value,
+        color: $(`color_${i}`).value
+      });
+    }
+    try {
+      const resp = await fetch('/button_config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Kiosk-Admin': '1' },
+        body: JSON.stringify({ buttons })
+      });
+      if (!resp.ok) throw new Error(resp.status);
+      toast('Configuration saved');
+      loadSlideTimes();
+      loadNightSettings();
+
+    } catch (e) {
+      toast('Saving failed', true);
+    }
+  }
+
+  // ─── Socket ───────────────────────────────────────────────────
+  socket.on('connect', async () => {
+    try {
+      const response = await fetch('/api_settings', {cache: 'no-store'});
+      if (response.status === 401) { location.replace('/admin/login'); return; }
+    } catch { return; }
+    socket.emit('get_status');
+    socket.emit('get_presentation_status');
+    socket.emit('get_schedule_program');
+    socket.emit('get_schedule_time');
+    socket.emit('get_streamdeck_input_lock');
+    setServer(true, 'Server online');
+    if (!heartbeatStarted) { heartbeatStarted = true; startHeartbeatMonitor(); }
+  });
+
+  socket.on('disconnect', () => setServer(false, 'Connection to server interrupted'));
+
+  socket.on('presentation_status', (d) => {
+    setYesNo('presentation-connected', d.active);
+    setYesNo('remote-connected', d.remote);
+    setYesNo('omt-connected', d.omt);
+    const output = d.screen;
+    $('playback-state').textContent = output?.message || output?.phase || '-';
+    $('media-type').textContent = output?.media?.type || '-';
+    $('media-src').textContent = output?.file || '-';
+  });
+
+  socket.on('schedule_program', (d) => {
+    scheduledMedia = d;
+    $('schedule-src').textContent = d.src || d.type || '-';
+  });
+
+  socket.on('schedule_time', (v) => { $('schedule-time').textContent = v || '--:--'; });
+
+  socket.on('heartbeat_response', (d) => {
+    if (heartbeatTimeout) { clearTimeout(heartbeatTimeout); heartbeatTimeout = null; }
+    setServer(true, 'Online (' + new Date(d.timestamp * 1000).toLocaleTimeString('de-CH') + ')');
+    beat();
+  });
+
+  socket.on('set_streamdeck_input_lock', (locked) => {
+    $('lock-streamdeck-input').checked = !locked;
+  });
+
+  function startHeartbeatMonitor() {
+    setInterval(() => {
+      socket.emit('heartbeat_request');
+      if (heartbeatTimeout) clearTimeout(heartbeatTimeout);
+      heartbeatTimeout = setTimeout(() => setServer(false, 'No answer from server'), 10000);
+    }, 5000);
+  }
+
+  function resetToDefault() { socket.emit('play_default_program'); }
+  function triggerSchedule() { if (scheduledMedia.type) socket.emit('show_media', scheduledMedia); }
+
+  $('lock-streamdeck-input').addEventListener('change', function () {
+    socket.emit('set_streamdeck_input_lock', { locked: !this.checked });
+  });
+
+  function updateClock() { $('clock').textContent = new Date().toLocaleTimeString('de-CH'); }
+  setInterval(updateClock, 1000);
+  updateClock();
+  // ─── OMT output ───────────────────────────────────────────────
+  let omtLoaded = false;
+  function showOmtStatus(st, name) {
+    const pill = $('omt-pill');
+    let text, cls = '';
+    if (!st.exe_found) text = 'PresenterOmt.exe missing';
+    else if (st.running && st.fps > 0) { text = `Running, ${st.fps} fps, ${Math.floor(st.connections / 2)} receiver(s)`; cls = 'ok'; }
+    else if (st.running) { text = 'Starting...'; cls = 'warn'; }
+    else text = 'Off';
+    pill.className = 'pill ' + cls;
+    $('omt-state').textContent = text;
+  }
+  async function loadOmt(first) {
+    try {
+      const d = await (await fetch('/omt_settings')).json();
+      if (first || !omtLoaded) {
+        const sel = $('omt-format');
+        sel.innerHTML = d.formats.map(f => `<option value="${f}">${f}</option>`).join('');
+        $('omt-enabled').checked = d.settings.enabled;
+        $('omt-name').value = d.settings.name;
+        sel.value = d.settings.format;
+        $('omt-gain').value = d.settings.gain_db;
+        omtLoaded = true;
+      }
+      showOmtStatus(d.status);
+      $('omt-address').textContent = location.hostname === 'localhost' || location.hostname === '127.0.0.1' ? '<computer name> (' + d.settings.name + ')' : location.hostname + ' (' + d.settings.name + ')';
+    } catch (e) { /* server restarting */ }
+  }
+  async function saveOmt() {
+    try {
+      const resp = await fetch('/omt_settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Kiosk-Admin': '1' },
+        body: JSON.stringify({ enabled: $('omt-enabled').checked, name: $('omt-name').value, format: $('omt-format').value, gain_db: parseFloat($('omt-gain').value) })
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.message || resp.status);
+      toast('OMT settings saved');
+      omtLoaded = false;
+      loadOmt(true);
+    } catch (e) { toast(e.message || 'Saving failed', true); }
+  }
+  setInterval(() => loadOmt(false), 2000);
+
+  async function adminRequest(path, data) {
+    const options = data ? {method: 'POST', headers: {'Content-Type':'application/json', 'X-Kiosk-Admin':'1'},
+      body: JSON.stringify(data)} : {cache:'no-store'};
+    const response = await fetch(path, options);
+    if (response.status === 401) { location.replace('/admin/login'); throw new Error('Please sign in.'); }
+    if (!response.ok) {
+      const reason = await response.json().catch(() => ({}));
+      throw new Error(reason.message || 'Save failed (' + response.status + ')');
+    }
+    return response.json();
+  }
+
+  let slideTimes = {};
+  function showFolderSeconds() {
+    $('slide-seconds').value = slideTimes[$('slide-folder').value] ?? '';
+  }
+  async function loadSlideTimes() {
+    try {
+      slideTimes = await adminRequest('/admin/slide-times');
+      const select = $('slide-folder');
+      const previous = select.value;
+      select.replaceChildren(...Object.keys(slideTimes).sort((a, b) =>
+        a.localeCompare(b, undefined, {numeric: true})).map(folder => new Option(folder, folder)));
+      if (Object.hasOwn(slideTimes, previous)) select.value = previous;
+      showFolderSeconds();
+    } catch (error) { toast(error.message, true); }
+  }
+  $('slide-folder').onchange = showFolderSeconds;
+  $('slide-times').onsubmit = async event => {
+    event.preventDefault();
+    try {
+      slideTimes = await adminRequest('/admin/slide-times', {
+        folder: $('slide-folder').value, seconds: $('slide-seconds').valueAsNumber
+      });
+      toast('Slideshow timing saved');
+    } catch (error) { toast(error.message, true); }
+  };
+  async function loadNightSettings() {
+    try {
+      const {settings, choices} = await adminRequest('/admin/schedule');
+      $('night-enabled').checked = settings.enabled;
+      $('night-time').value = settings.time;
+      const select = $('night-target');
+      select.replaceChildren(...Object.entries(choices).map(([key, label]) => new Option(label, key)));
+      if (!(settings.target in choices)) select.add(new Option('Selected button unavailable', settings.target));
+      select.value = settings.target;
+    } catch (error) { toast(error.message, true); }
+  }
+  $('schedule-form').onsubmit = async event => {
+    event.preventDefault();
+    try {
+      await adminRequest('/admin/schedule', {enabled: $('night-enabled').checked,
+        time: $('night-time').value, target: $('night-target').value});
+      toast('Schedule saved');
+    } catch (error) { toast(error.message, true); }
+  };
+  $('remote-password-form').onsubmit = async event => {
+    event.preventDefault();
+    const password = $('remote-password').value;
+    if (password !== $('remote-confirm').value) { toast('The passwords do not match.', true); return; }
+    try {
+      await adminRequest('/admin/remote-password', {password});
+      $('remote-password-form').reset();
+      toast('Remote password saved');
+    } catch (error) { toast(error.message, true); }
+  };
+  loadNightSettings();
+  loadConfigEditor();
+  loadSlideTimes();
+  loadApiSettings();
+  loadOmt(true);
+</script>
+</body>
+</html>
