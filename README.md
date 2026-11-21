@@ -1,6 +1,8 @@
 # Presentation Kiosk 3.18
 
-Presentation Kiosk lets an event operator switch a venue screen between a sponsor loop, an announcement and prepared emergency slides. The remote shows a preview of the current output so the operator can confirm which message is on air.
+Presentation Kiosk lets an event operator switch a venue screen between a sponsor loop, an announcement and prepared emergency slides. The remote shows a preview of the current output so the operator can confirm which message is on air. 
+The small image on the Remote Screen is a real-time view of the presentation screen and shows exactly what the audience sees.
+An editor is available for creating emergency slides. You select the necessary languages, specify the source language, and write the slides. DEEPL.COM then automatically translates the remaining slides at the click of a button. All you need is a free DEEPL Developer account and its API key. The editor is installed automatically, and an icon is placed on the desktop.
 
 ![Kiosk 3 remote control with Evacuation on air and the active English evacuation slide visible below the program buttons](docs/kiosk.png)
 
