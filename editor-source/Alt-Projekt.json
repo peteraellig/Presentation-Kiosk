@@ -1,0 +1,335 @@
+{
+  "Kiosk": "C:\\kiosk3",
+  "Languages": [
+    {
+      "Code": "eng",
+      "Active": true
+    },
+    {
+      "Code": "deu",
+      "Active": true
+    },
+    {
+      "Code": "fra",
+      "Active": true
+    },
+    {
+      "Code": "bul",
+      "Active": true
+    }
+  ],
+  "Notices": [
+    {
+      "Separate": true,
+      "Number": 1,
+      "Label": "Evacuation",
+      "Texts": {
+        "deu": {
+          "Title": "Evakuierung",
+          "Body": "Bitte Halle sofort verlassen\nBefolgen Sie die Anweisungen des Personals",
+          "TitleSource": "Evakuierung",
+          "BodySource": "Bitte Halle sofort verlassen\nBefolgen Sie die Anweisungen des Personals"
+        },
+        "eng": {
+          "Title": "Evacuation",
+          "Body": "please leave the venue immediately\nfollow marked exits",
+          "TitleSource": "Evakuierung",
+          "BodySource": "Bitte Halle sofort verlassen\nBefolgen Sie die Anweisungen des Personals"
+        },
+        "fra": {
+          "Title": "Evacuation",
+          "Body": "veuillez quitter la salle imm\u00E9diatement\nSuivez les instructions du personnel",
+          "TitleSource": "Evakuierung",
+          "BodySource": "Bitte Halle sofort verlassen\nBefolgen Sie die Anweisungen des Personals"
+        },
+        "bul": {
+          "Title": "\u0415\u0432\u0430\u043A\u0443\u0430\u0446\u0438\u044F",
+          "Body": "\u041C\u043E\u043B\u044F, \u043D\u0430\u043F\u0443\u0441\u043D\u0435\u0442\u0435 \u0445\u0430\u043B\u0435\u0442\u043E \u043D\u0435\u0437\u0430\u0431\u0430\u0432\u043D\u043E\n\u0421\u043B\u0435\u0434\u0432\u0430\u0439\u0442\u0435 \u0443\u043A\u0430\u0437\u0430\u043D\u0438\u044F\u0442\u0430 \u043D\u0430 \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0430",
+          "TitleSource": "Evakuierung",
+          "BodySource": "Bitte Halle sofort verlassen\nBefolgen Sie die Anweisungen des Personals"
+        }
+      }
+    },
+    {
+      "Separate": false,
+      "Number": 2,
+      "Label": "Broadcast cut off",
+      "Texts": {
+        "deu": {
+          "Title": "Die Live-\u00DCbertragung kann nicht fortgesetzt werden.",
+          "Body": "Es wird eine aufgezeichnete Probe gezeigt",
+          "TitleSource": "Die Live-\u00DCbertragung kann nicht fortgesetzt werden.",
+          "BodySource": "Es wird eine aufgezeichnete Probe gezeigt"
+        },
+        "eng": {
+          "Title": "We are unable to continue the live broadcast",
+          "Body": "A prerecorded rehearsal will be shown",
+          "TitleSource": "Die Live-\u00DCbertragung kann nicht fortgesetzt werden.",
+          "BodySource": "Es wird eine aufgezeichnete Probe gezeigt"
+        },
+        "fra": {
+          "Title": "La diffusion en direct ne peut pas continuer",
+          "Body": "Une r\u00E9p\u00E9tition enregistr\u00E9e est diffus\u00E9e",
+          "TitleSource": "Die Live-\u00DCbertragung kann nicht fortgesetzt werden.",
+          "BodySource": "Es wird eine aufgezeichnete Probe gezeigt"
+        },
+        "bul": {
+          "Title": "\u041F\u0440\u0435\u0434\u0430\u0432\u0430\u043D\u0435\u0442\u043E \u043D\u0430 \u0436\u0438\u0432\u043E \u043D\u0435 \u043C\u043E\u0436\u0435 \u0434\u0430 \u043F\u0440\u043E\u0434\u044A\u043B\u0436\u0438.",
+          "Body": "\u041F\u043E\u043A\u0430\u0437\u0432\u0430 \u0441\u0435 \u0437\u0430\u043F\u0438\u0441\u0430\u043D\u0430 \u043F\u0440\u043E\u0431\u0430",
+          "TitleSource": "Die Live-\u00DCbertragung kann nicht fortgesetzt werden.",
+          "BodySource": "Es wird eine aufgezeichnete Probe gezeigt"
+        }
+      }
+    },
+    {
+      "Separate": false,
+      "Number": 3,
+      "Label": "Artist cannot perform",
+      "Texts": {
+        "deu": {
+          "Title": "Der K\u00FCnstler kann leider nicht auftreten",
+          "Body": "Wir zeigen eine Aufzeichnung",
+          "TitleSource": "Der K\u00FCnstler kann leider nicht auftreten",
+          "BodySource": "Wir zeigen eine Aufzeichnung"
+        },
+        "eng": {
+          "Title": "The artist cannot perform live",
+          "Body": "We are showing a prerecorded performance",
+          "TitleSource": "Der K\u00FCnstler kann leider nicht auftreten",
+          "BodySource": "Wir zeigen eine Aufzeichnung"
+        },
+        "fra": {
+          "Title": "L\u2019artiste ne peut malheureusement pas se produire",
+          "Body": "Nous montrons une performance enregistr\u00E9e",
+          "TitleSource": "Der K\u00FCnstler kann leider nicht auftreten",
+          "BodySource": "Wir zeigen eine Aufzeichnung"
+        },
+        "bul": {
+          "Title": "\u0417\u0430 \u0441\u044A\u0436\u0430\u043B\u0435\u043D\u0438\u0435, \u0438\u0437\u043F\u044A\u043B\u043D\u0438\u0442\u0435\u043B\u044F\u0442 \u043D\u0435 \u043C\u043E\u0436\u0435 \u0434\u0430 \u0438\u0437\u043B\u0435\u0437\u0435 \u043D\u0430 \u0441\u0446\u0435\u043D\u0430\u0442\u0430",
+          "Body": "\u041F\u043E\u043A\u0430\u0437\u0432\u0430\u043C\u0435 \u0437\u0430\u043F\u0438\u0441",
+          "TitleSource": "Der K\u00FCnstler kann leider nicht auftreten",
+          "BodySource": "Wir zeigen eine Aufzeichnung"
+        }
+      }
+    },
+    {
+      "Separate": false,
+      "Number": 4,
+      "Label": "Lock Down",
+      "Texts": {
+        "deu": {
+          "Title": "LOCKDOWN",
+          "Body": "Bitte in der Halle bleiben.\nWarten Sie auf weitere Anweisungen",
+          "TitleSource": "LOCKDOWN",
+          "BodySource": "Bitte in der Halle bleiben.\nWarten Sie auf weitere Anweisungen"
+        },
+        "eng": {
+          "Title": "LOCKDOWN",
+          "Body": "Please remain in the arena!\nAwait further instructions.",
+          "TitleSource": "LOCKDOWN",
+          "BodySource": "Bitte in der Halle bleiben.\nWarten Sie auf weitere Anweisungen"
+        },
+        "fra": {
+          "Title": "LOCKDOWN",
+          "Body": "Veuillez rester dans la salle!\nAttendez d\u2019autres instructions.",
+          "TitleSource": "LOCKDOWN",
+          "BodySource": "Bitte in der Halle bleiben.\nWarten Sie auf weitere Anweisungen"
+        },
+        "bul": {
+          "Title": "\u041B\u041E\u041A\u0414\u0410\u0423\u041D",
+          "Body": "\u041C\u043E\u043B\u044F, \u043E\u0441\u0442\u0430\u043D\u0435\u0442\u0435 \u0432\u044A\u0432 \u0444\u043E\u0430\u0439\u0435\u0442\u043E.\n\u0418\u0437\u0447\u0430\u043A\u0430\u0439\u0442\u0435 \u0434\u043E\u043F\u044A\u043B\u043D\u0438\u0442\u0435\u043B\u043D\u0438 \u0438\u043D\u0441\u0442\u0440\u0443\u043A\u0446\u0438\u0438",
+          "TitleSource": "LOCKDOWN",
+          "BodySource": "Bitte in der Halle bleiben.\nWarten Sie auf weitere Anweisungen"
+        }
+      }
+    },
+    {
+      "Separate": false,
+      "Number": 5,
+      "Label": "Fire",
+      "Texts": {
+        "deu": {
+          "Title": "Es wurde ein Feuer im Geb\u00E4ude gemeldet.",
+          "Body": "Bitte verlassen Sie das Geb\u00E4ude sofort \u00FCber den n\u00E4chstgelegenen Notausgang.",
+          "TitleSource": "Es wurde ein Feuer im Geb\u00E4ude gemeldet.",
+          "BodySource": "Bitte verlassen Sie das Geb\u00E4ude sofort \u00FCber den n\u00E4chstgelegenen Notausgang."
+        },
+        "eng": {
+          "Title": "A fire has been reported in the building.",
+          "Body": "Please evacuate immediately using the nearest emergency exit.",
+          "TitleSource": "Es wurde ein Feuer im Geb\u00E4ude gemeldet.",
+          "BodySource": "Bitte verlassen Sie das Geb\u00E4ude sofort \u00FCber den n\u00E4chstgelegenen Notausgang."
+        },
+        "fra": {
+          "Title": "Un incendie a \u00E9t\u00E9 signal\u00E9 dans le b\u00E2timent.",
+          "Body": "Veuillez \u00E9vacuer imm\u00E9diatement par la sortie de secours la plus proche.",
+          "TitleSource": "Es wurde ein Feuer im Geb\u00E4ude gemeldet.",
+          "BodySource": "Bitte verlassen Sie das Geb\u00E4ude sofort \u00FCber den n\u00E4chstgelegenen Notausgang."
+        },
+        "bul": {
+          "Title": "\u0421\u044A\u043E\u0431\u0449\u0430\u0432\u0430 \u0441\u0435 \u0437\u0430 \u043F\u043E\u0436\u0430\u0440 \u0432 \u0441\u0433\u0440\u0430\u0434\u0430\u0442\u0430.",
+          "Body": "\u041C\u043E\u043B\u044F, \u043D\u0430\u043F\u0443\u0441\u043D\u0435\u0442\u0435 \u0441\u0433\u0440\u0430\u0434\u0430\u0442\u0430 \u043D\u0435\u0437\u0430\u0431\u0430\u0432\u043D\u043E \u043F\u0440\u0435\u0437 \u043D\u0430\u0439-\u0431\u043B\u0438\u0437\u043A\u0438\u044F \u0430\u0432\u0430\u0440\u0438\u0435\u043D \u0438\u0437\u0445\u043E\u0434.",
+          "TitleSource": "Es wurde ein Feuer im Geb\u00E4ude gemeldet.",
+          "BodySource": "Bitte verlassen Sie das Geb\u00E4ude sofort \u00FCber den n\u00E4chstgelegenen Notausgang."
+        }
+      }
+    },
+    {
+      "Separate": false,
+      "Number": 6,
+      "Label": "Power outage",
+      "Texts": {
+        "deu": {
+          "Title": "STROMAUSFALL",
+          "Body": "Derzeit ist unser Geb\u00E4ude von einem Stromausfall betroffen. Die Mitarbeiter arbeiten an der Wiederherstellung der Stromversorgung.",
+          "TitleSource": "STROMAUSFALL",
+          "BodySource": "Derzeit ist unser Geb\u00E4ude von einem Stromausfall betroffen. Die Mitarbeiter arbeiten an der Wiederherstellung der Stromversorgung."
+        },
+        "eng": {
+          "Title": "POWER OUTAGE",
+          "Body": "We are currently experiencing a power outage affecting our building. Crews are working to restore power.",
+          "TitleSource": "STROMAUSFALL",
+          "BodySource": "Derzeit ist unser Geb\u00E4ude von einem Stromausfall betroffen. Die Mitarbeiter arbeiten an der Wiederherstellung der Stromversorgung."
+        },
+        "fra": {
+          "Title": "PANNE D\u0027\u00C9LECTRICIT\u00C9",
+          "Body": "Actuellement, notre b\u00E2timent est touch\u00E9 par une panne d\u0027\u00E9lectricit\u00E9. Le personnel s\u0027emploie \u00E0 r\u00E9tablir le courant.",
+          "TitleSource": "STROMAUSFALL",
+          "BodySource": "Derzeit ist unser Geb\u00E4ude von einem Stromausfall betroffen. Die Mitarbeiter arbeiten an der Wiederherstellung der Stromversorgung."
+        },
+        "bul": {
+          "Title": "\u0421\u043F\u0438\u0440\u0430\u043D\u0435 \u043D\u0430 \u0442\u043E\u043A\u0430",
+          "Body": "\u0412 \u043C\u043E\u043C\u0435\u043D\u0442\u0430 \u0432 \u043D\u0430\u0448\u0430\u0442\u0430 \u0441\u0433\u0440\u0430\u0434\u0430 \u0438\u043C\u0430 \u043F\u0440\u0435\u043A\u044A\u0441\u0432\u0430\u043D\u0435 \u043D\u0430 \u0435\u043B\u0435\u043A\u0442\u0440\u043E\u0437\u0430\u0445\u0440\u0430\u043D\u0432\u0430\u043D\u0435\u0442\u043E. \u0421\u043B\u0443\u0436\u0438\u0442\u0435\u043B\u0438\u0442\u0435 \u0440\u0430\u0431\u043E\u0442\u044F\u0442 \u043F\u043E \u0432\u044A\u0437\u0441\u0442\u0430\u043D\u043E\u0432\u044F\u0432\u0430\u043D\u0435\u0442\u043E \u043D\u0430 \u0435\u043B\u0435\u043A\u0442\u0440\u043E\u0437\u0430\u0445\u0440\u0430\u043D\u0432\u0430\u043D\u0435\u0442\u043E.",
+          "TitleSource": "STROMAUSFALL",
+          "BodySource": "Derzeit ist unser Geb\u00E4ude von einem Stromausfall betroffen. Die Mitarbeiter arbeiten an der Wiederherstellung der Stromversorgung."
+        }
+      }
+    },
+    {
+      "Separate": false,
+      "Number": 7,
+      "Label": "Weather",
+      "Texts": {
+        "deu": {
+          "Title": "WETTER ALARM",
+          "Body": "Alle Zuschauer m\u00FCssen das Festivalgel\u00E4nde sofort verlassen, da sich gef\u00E4hrliches Wetter n\u00E4hert. Befolgen Sie die Anweisungen des Personals und verlassen Sie das Gel\u00E4nde in aller Ruhe \u00FCber die gekennzeichneten Ausg\u00E4nge. Ihre Sicherheit ist unsere Priorit\u00E4t.",
+          "TitleSource": "WETTER ALARM",
+          "BodySource": "Alle Zuschauer m\u00FCssen das Festivalgel\u00E4nde sofort verlassen, da sich gef\u00E4hrliches Wetter n\u00E4hert. Befolgen Sie die Anweisungen des Personals und verlassen Sie das Gel\u00E4nde in aller Ruhe \u00FCber die gekennzeichneten Ausg\u00E4nge. Ihre Sicherheit ist unsere Priorit\u00E4t."
+        },
+        "eng": {
+          "Title": "WEATHER ALERT",
+          "Body": "All spectators must leave the festival grounds immediately due to dangerous weather approaching. Follow staff instructions and evacuate calmly via marked exits. Your safety is our priority.",
+          "TitleSource": "WETTER ALARM",
+          "BodySource": "Alle Zuschauer m\u00FCssen das Festivalgel\u00E4nde sofort verlassen, da sich gef\u00E4hrliches Wetter n\u00E4hert. Befolgen Sie die Anweisungen des Personals und verlassen Sie das Gel\u00E4nde in aller Ruhe \u00FCber die gekennzeichneten Ausg\u00E4nge. Ihre Sicherheit ist unsere Priorit\u00E4t."
+        },
+        "fra": {
+          "Title": "ALERTE M\u00C9T\u00C9O",
+          "Body": "Des conditions m\u00E9t\u00E9orologiques dangereuses approchent. Tous les spectateurs doivent quitter l\u2019enceinte du festival imm\u00E9diatement. Veuillez suivre les instructions du personnel et emprunter les sorties indiqu\u00E9es. Votre s\u00E9curit\u00E9 est notre priorit\u00E9.",
+          "TitleSource": "WETTER ALARM",
+          "BodySource": "Alle Zuschauer m\u00FCssen das Festivalgel\u00E4nde sofort verlassen, da sich gef\u00E4hrliches Wetter n\u00E4hert. Befolgen Sie die Anweisungen des Personals und verlassen Sie das Gel\u00E4nde in aller Ruhe \u00FCber die gekennzeichneten Ausg\u00E4nge. Ihre Sicherheit ist unsere Priorit\u00E4t."
+        },
+        "bul": {
+          "Title": "\u041F\u0420\u0415\u0414\u0423\u041F\u0420\u0415\u0416\u0414\u0415\u041D\u0418\u0415 \u0417\u0410 \u0412\u0420\u0415\u041C\u0415\u0422\u041E",
+          "Body": "\u0412\u0441\u0438\u0447\u043A\u0438 \u0437\u0440\u0438\u0442\u0435\u043B\u0438 \u0442\u0440\u044F\u0431\u0432\u0430 \u043D\u0435\u0437\u0430\u0431\u0430\u0432\u043D\u043E \u0434\u0430 \u043D\u0430\u043F\u0443\u0441\u043D\u0430\u0442 \u0442\u0435\u0440\u0438\u0442\u043E\u0440\u0438\u044F\u0442\u0430 \u043D\u0430 \u0444\u0435\u0441\u0442\u0438\u0432\u0430\u043B\u0430, \u0442\u044A\u0439 \u043A\u0430\u0442\u043E \u043D\u0430\u0431\u043B\u0438\u0436\u0430\u0432\u0430\u0442 \u043E\u043F\u0430\u0441\u043D\u0438 \u043C\u0435\u0442\u0435\u043E\u0440\u043E\u043B\u043E\u0433\u0438\u0447\u043D\u0438 \u0443\u0441\u043B\u043E\u0432\u0438\u044F. \u0421\u043B\u0435\u0434\u0432\u0430\u0439\u0442\u0435 \u0443\u043A\u0430\u0437\u0430\u043D\u0438\u044F\u0442\u0430 \u043D\u0430 \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0430 \u0438 \u043D\u0430\u043F\u0443\u0441\u043D\u0435\u0442\u0435 \u0441\u043F\u043E\u043A\u043E\u0439\u043D\u043E \u0442\u0435\u0440\u0438\u0442\u043E\u0440\u0438\u044F\u0442\u0430 \u043F\u0440\u0435\u0437 \u043E\u0431\u043E\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0442\u0435 \u0438\u0437\u0445\u043E\u0434\u0438. \u0412\u0430\u0448\u0430\u0442\u0430 \u0431\u0435\u0437\u043E\u043F\u0430\u0441\u043D\u043E\u0441\u0442 \u0435 \u043D\u0430\u0448 \u043F\u0440\u0438\u043E\u0440\u0438\u0442\u0435\u0442.",
+          "TitleSource": "WETTER ALARM",
+          "BodySource": "Alle Zuschauer m\u00FCssen das Festivalgel\u00E4nde sofort verlassen, da sich gef\u00E4hrliches Wetter n\u00E4hert. Befolgen Sie die Anweisungen des Personals und verlassen Sie das Gel\u00E4nde in aller Ruhe \u00FCber die gekennzeichneten Ausg\u00E4nge. Ihre Sicherheit ist unsere Priorit\u00E4t."
+        }
+      }
+    },
+    {
+      "Separate": false,
+      "Number": 8,
+      "Label": "Cancel Show",
+      "Texts": {
+        "deu": {
+          "Title": "Abbruch der Veranstaltung",
+          "Body": "Die Veranstaltung kann leider nicht fortgesetzt werden.\nBitte verlassen Sie die Halle ruhig und geordnet.\nBefolgen Sie die Anweisungen des Personals.",
+          "TitleSource": "Abbruch der Veranstaltung",
+          "BodySource": "Die Veranstaltung kann leider nicht fortgesetzt werden.\nBitte verlassen Sie die Halle ruhig und geordnet.\nBefolgen Sie die Anweisungen des Personals."
+        },
+        "eng": {
+          "Title": "Show Cancellation",
+          "Body": "Unfortunately, the show cannot continue.\nPlease leave the arena calmly and in an orderly manner.\nFollow the instructions of the staff.",
+          "TitleSource": "Abbruch der Veranstaltung",
+          "BodySource": "Die Veranstaltung kann leider nicht fortgesetzt werden.\nBitte verlassen Sie die Halle ruhig und geordnet.\nBefolgen Sie die Anweisungen des Personals."
+        },
+        "fra": {
+          "Title": "Arr\u00EAt d\u00E9finitif du spectacle",
+          "Body": "Malheureusement, le spectacle ne peut pas se poursuivre.\nVeuillez quitter la salle dans le calme et de mani\u00E8re ordonn\u00E9e.\nSuivez les instructions du personnel.",
+          "TitleSource": "Abbruch der Veranstaltung",
+          "BodySource": "Die Veranstaltung kann leider nicht fortgesetzt werden.\nBitte verlassen Sie die Halle ruhig und geordnet.\nBefolgen Sie die Anweisungen des Personals."
+        },
+        "bul": {
+          "Title": "\u041F\u0440\u0435\u043A\u0440\u0430\u0442\u044F\u0432\u0430\u043D\u0435 \u043D\u0430 \u0441\u044A\u0431\u0438\u0442\u0438\u0435\u0442\u043E",
+          "Body": "\u0417\u0430 \u0441\u044A\u0436\u0430\u043B\u0435\u043D\u0438\u0435, \u0441\u044A\u0431\u0438\u0442\u0438\u0435\u0442\u043E \u043D\u0435 \u043C\u043E\u0436\u0435 \u0434\u0430 \u043F\u0440\u043E\u0434\u044A\u043B\u0436\u0438.\n\u041C\u043E\u043B\u044F, \u043D\u0430\u043F\u0443\u0441\u043D\u0435\u0442\u0435 \u0437\u0430\u043B\u0430\u0442\u0430 \u0441\u043F\u043E\u043A\u043E\u0439\u043D\u043E \u0438 \u043E\u0440\u0433\u0430\u043D\u0438\u0437\u0438\u0440\u0430\u043D\u043E.\n\u0421\u043B\u0435\u0434\u0432\u0430\u0439\u0442\u0435 \u0443\u043A\u0430\u0437\u0430\u043D\u0438\u044F\u0442\u0430 \u043D\u0430 \u043F\u0435\u0440\u0441\u043E\u043D\u0430\u043B\u0430.",
+          "TitleSource": "Abbruch der Veranstaltung",
+          "BodySource": "Die Veranstaltung kann leider nicht fortgesetzt werden.\nBitte verlassen Sie die Halle ruhig und geordnet.\nBefolgen Sie die Anweisungen des Personals."
+        }
+      }
+    },
+    {
+      "Separate": false,
+      "Number": 9,
+      "Label": "Notice 9",
+      "Texts": {
+        "deu": {
+          "Title": "",
+          "Body": "",
+          "TitleSource": "",
+          "BodySource": ""
+        }
+      }
+    },
+    {
+      "Separate": false,
+      "Number": 10,
+      "Label": "Notice 10",
+      "Texts": {
+        "deu": {
+          "Title": "",
+          "Body": "",
+          "TitleSource": "",
+          "BodySource": ""
+        }
+      }
+    }
+  ],
+  "Layout": {
+    "Hintergrundfarbe": "#F3E600",
+    "Hintergrundbild": "",
+    "Links": 65,
+    "Oben": 40,
+    "Breite": 1790,
+    "H\u00F6he": 840,
+    "Titelschrift": "Segoe UI",
+    "Titelstil": 1,
+    "Titelgr\u00F6\u00DFe": 90,
+    "TitelversatzX": 0,
+    "TitelversatzY": 5,
+    "Textschrift": "Segoe UI",
+    "Textstil": 1,
+    "Textgr\u00F6\u00DFe": 90,
+    "TextversatzX": 0,
+    "AbstandNachTitel": 12,
+    "MehrsprachigMaximum": 320,
+    "MehrsprachigEngAb": 180,
+    "MehrsprachigBreiteProzent": 90,
+    "EinsprachigMaximum": 1100,
+    "EinsprachigEngAb": 170,
+    "EinsprachigBreiteProzent": 94,
+    "Logodatei": "Logo.png",
+    "LogoLinks": 1510,
+    "LogoOben": 885,
+    "LogoBreite": 365,
+    "TitlePosition": {
+      "X": 960,
+      "Y": 45,
+      "Width": 1790
+    },
+    "BodyPosition": {
+      "X": 962,
+      "Y": 294,
+      "Width": 1790
+    }
+  }
+}

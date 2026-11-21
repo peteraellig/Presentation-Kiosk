@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- Presentation System Kiosk 2.0 · Peter Aellig · admin.html -->
+<!-- Kiosk3 3.18 · © Peter Aellig · admin.html -->
 <html lang="de">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin – Presentation System</title>
+  <title>Kiosk3 – Admin</title>
   <link rel="stylesheet" href="/static/style.css">
   <script src="/static/socket.io.min.js"></script>
   <style>
@@ -67,6 +67,7 @@
   <div class="topbar">
     <h1>Admin Dashboard</h1>
     <button id="logout" type="button">Abmelden</button>
+    <span class="kiosk-brand">Kiosk3 3.18 · © Peter Aellig</span>
   </div>
 
   <div class="card">
@@ -165,14 +166,14 @@
     <dialog id="audio-help" aria-labelledby="audio-help-title">
       <h2 id="audio-help-title">Chrome · No sound? / Kein Ton?</h2>
       <section lang="de"><h3>Deutsch</h3>
-        <p>Damit der Ton in deinem normalen Chrome-Tab auch nach einem Refresh startet, braucht die Kiosk-Adresse eine dauerhaft gespeicherte Tonfreigabe.</p>
+        <p>Damit der Ton in deinem normalen Chrome-Tab auch nach einem Refresh startet, braucht die Kiosk3-Adresse eine dauerhaft gespeicherte Tonfreigabe.</p>
         <p>So setzt du sie einmalig im Chrome-Profil auf dem Präsentations-PC:</p>
         <ol><li>Öffne <code>chrome://settings/content/sound</code>.</li>
           <li>Klicke unter <strong>„Wiedergabe von Ton zulassen“</strong> auf <strong>„Hinzufügen“</strong>.</li>
           <li>Trage die Adresse des Präsentationsfensters ein, zum Beispiel <code class="audio-origin">http://192.168.1.113:53101</code>.</li>
           <li>Lade den Präsentationstab mit <kbd>F5</kbd> neu.</li></ol></section>
       <section lang="en"><h3>English</h3>
-        <p>To play sound automatically after a refresh in a regular Chrome tab, save a sound permission for the kiosk address.</p>
+        <p>To play sound automatically after a refresh in a regular Chrome tab, save a sound permission for the Kiosk3 address.</p>
         <p>Set it once in the Chrome profile on the presentation PC:</p>
         <ol><li>Open <code>chrome://settings/content/sound</code>.</li>
           <li>Under <strong>Allowed to play sound</strong>, click <strong>Add</strong>.</li>
@@ -216,7 +217,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="footer ok" id="footer">Presentation System Kiosk 2.0 · Peter Aellig · <span id="clock"></span></div>
+<div class="footer ok" id="footer"><span id="clock"></span></div>
 
 <script>
   document.getElementById('logout').onclick = async () => {

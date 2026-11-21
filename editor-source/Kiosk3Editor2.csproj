@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>Kiosk3Editor</AssemblyName>
+    <RootNamespace>Kiosk3</RootNamespace>
+    <ApplicationIcon>kiosk.ico</ApplicationIcon>
+    <Version>3.18.0</Version>
+    <Product>Kiosk3 Notfalltafel-Editor</Product>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Update="Vorlagen.json;Vorlage-Projekt.json;Logo.png;kiosk.ico;Alt-Projekt.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

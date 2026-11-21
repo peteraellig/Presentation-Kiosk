@@ -84,14 +84,14 @@ def start_missing(use_chrome=False):
     deadline = time.monotonic() + 35
     while status is None and time.monotonic() < deadline:
         if started is not None and started.poll() is not None:
-            raise RuntimeError("Kiosk-Server beim Start beendet. Bitte Serverausgabe prüfen.")
+            raise RuntimeError("Kiosk3-Server beim Start beendet. Bitte Serverausgabe prüfen.")
         time.sleep(.25)
         status = ready_status()
     if status is None:
         raise RuntimeError("Der vorhandene Server meldet keine Startbereitschaft. "
                            "Nach einem Update den bisherigen Server einmal regulär beenden.")
     if status.get("pid") != server_pid:
-        raise RuntimeError("Der antwortende Server gehört nicht zu dieser Kiosk-Kopie.")
+        raise RuntimeError("Der antwortende Server gehört nicht zu dieser Kiosk3-Kopie.")
     if not python_process("app_streamdeck.py"):
         start_python("app_streamdeck.py")
     if (status["screen"] or running_component({"firefox.exe"}, PROFILE)

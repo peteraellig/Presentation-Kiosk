@@ -45,8 +45,8 @@ def require_admin():
 
 PAGE = """<!doctype html><html lang="de"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Kiosk 3 – Administration</title><link rel="stylesheet" href="/static/style.css">
-<main class="wrap"><section class="card"><h1>{{ title }}</h1>
+<title>Kiosk3 – Administration</title><link rel="stylesheet" href="/static/style.css">
+<main class="wrap"><div class="topbar"><h1>{{ title }}</h1><span class="kiosk-brand">Kiosk3 3.18 · © Peter Aellig</span></div><section class="card">
 {% if message %}<p role="alert">{{ message }}</p>{% endif %}
 {% if form %}<form method="post">
 <input type="hidden" name="csrf" value="{{ csrf }}">
@@ -65,8 +65,8 @@ def login():
     stored = password_hash()
     setup = stored is None
     if setup and not local_setup():
-        return render_template_string(PAGE, title="Kiosk 3", form=False,
-            message="Das erste Admin-Passwort muss am Kiosk-PC über localhost eingerichtet werden."), 403
+        return render_template_string(PAGE, title="Kiosk3", form=False,
+            message="Das erste Admin-Passwort muss am Kiosk3-PC über localhost eingerichtet werden."), 403
     title = "Admin-Passwort einrichten" if setup else "Admin-Anmeldung"
     message = "Bitte mindestens 8 Zeichen verwenden." if setup else ""
     status = 200

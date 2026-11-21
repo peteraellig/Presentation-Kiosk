@@ -37,6 +37,7 @@ h2 { font-size: 1rem; margin: 0 0 12px; font-weight: 600; color: var(--muted); t
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 14px 0; flex-wrap: wrap;
 }
+.kiosk-brand { margin-inline-start: auto; color: var(--muted); font-size: .875rem; text-align: right; }
 .pills { display: flex; gap: 8px; flex-wrap: wrap; }
 .pill {
   display: inline-flex; align-items: center; gap: 8px;

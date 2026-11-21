@@ -1,4 +1,4 @@
-# Presentation System v1.4.6 · July 2025 · Peter Aellig ·
+# Kiosk3 3.18 · © Peter Aellig ·
 # Streamdeck Driver
 # The server supplies the same configured slots used by Remote Control.
 
@@ -18,7 +18,7 @@ STREAMDECK_INPUT_LOCK = True  # Gesperrt beim Start
 
 
 print("\n-------------------------------------------------------------")
-print("\n     ESC Kiosk Streamdeck Driver 1.4.6 Peter Aellig           ")
+print("\n     Kiosk3 3.18 · © Peter Aellig · Stream Deck           ")
 print("\n-------------------------------------------------------------")
 
 
@@ -340,7 +340,7 @@ def maintain_connection():
             sio.connect(SERVER_URL, wait_timeout=5)
             sio.wait()  # includes Socket.IO's retries after a transport loss
         except (socketio.exceptions.ConnectionError, OSError) as error:
-            print(f"Kiosk-Server nicht erreichbar: {error}")
+            print(f"Kiosk3-Server nicht erreichbar: {error}")
         time.sleep(2)
 
 

@@ -12,7 +12,7 @@
       "label": "Evacuation",
       "type": "slideshow",
       "src": "bild1/",
-      "color": "red"
+      "color": "blue"
     },
     {
       "enabled": true,
@@ -23,7 +23,7 @@
     },
     {
       "enabled": true,
-      "label": "Show Cancel",
+      "label": "Artist cannot perform",
       "type": "slideshow",
       "src": "bild3/",
       "color": "amber"
@@ -33,32 +33,32 @@
       "label": "Lock Down",
       "type": "slideshow",
       "src": "bild4/",
-      "color": "red"
+      "color": "blue"
     },
     {
       "enabled": true,
-      "label": "Weather Alert",
+      "label": "Fire",
       "type": "slideshow",
       "src": "bild5/",
       "color": "amber"
     },
     {
       "enabled": true,
-      "label": "Eco Talk",
-      "type": "video",
-      "src": "videos/video4.mp4",
+      "label": "Power outage",
+      "type": "slideshow",
+      "src": "bild6/",
       "color": "blue"
     },
     {
-      "enabled": false,
-      "label": "Notice 7",
+      "enabled": true,
+      "label": "Weather",
       "type": "slideshow",
       "src": "bild7/",
       "color": "blue"
     },
     {
-      "enabled": false,
-      "label": "Notice 8",
+      "enabled": true,
+      "label": "Cancel Show",
       "type": "slideshow",
       "src": "bild8/",
       "color": "blue"

@@ -1,8 +1,8 @@
 ; Kiosk 3 setup - compile with Inno Setup (ISCC.exe kiosk3.iss)
 ; The application files are taken from SrcDir (the finished kiosk3 folder).
 
-#define AppName "Kiosk 3"
-#define AppVersion "3.15"
+#define AppName "Kiosk3"
+#define AppVersion "3.18"
 #define SrcDir ".."
 
 [Setup]
@@ -30,7 +30,8 @@ Name: "chromeaudio"; Description: "Allow automatic sound in Chrome for Kiosk 3 a
 Name: "deps"; Description: "Install Python 3.12, Python packages, StreamDeck driver and VC++ runtime (internet needed)"
 Name: "firefox"; Description: "Install Firefox as kiosk browser (autoplay with sound allowed, internet needed)"
 Name: "firewall"; Description: "Allow network access to the kiosk (Windows Firewall, TCP port 53101) so remote devices can connect"
-Name: "desktopicon"; Description: "Create a desktop icon to start the kiosk"
+Name: "editor"; Description: "Install the emergency board editor (C:\kiosk3\editor, needs the .NET 10 Desktop Runtime from the option above)"
+Name: "desktopicon"; Description: "Create desktop icons (kiosk, and the editor if installed)"
 Name: "autostart"; Description: "Start the kiosk automatically when Windows starts"; Flags: unchecked
 
 [Files]
@@ -56,16 +57,22 @@ Source: "{#SrcDir}\licence\OMT-LICENSE.txt"; DestDir: "{app}\licence"; Flags: ig
 Source: "{#SrcDir}\licence\THIRD-PARTY-NOTICES.txt"; DestDir: "{app}\licence"; Flags: ignoreversion
 Source: "{#SrcDir}\static\videos\*.mp4"; DestDir: "{app}\static\videos"; Flags: ignoreversion
 Source: "{#SrcDir}\static\videos_playlist\*.mp4"; DestDir: "{app}\static\videos_playlist"; Flags: ignoreversion
-Source: "{#SrcDir}\static\bild1\Evakuierung_D.png"; DestDir: "{app}\static\bild1"; Flags: ignoreversion
-Source: "{#SrcDir}\static\bild1\Evakuierung_E.png"; DestDir: "{app}\static\bild1"; Flags: ignoreversion
-Source: "{#SrcDir}\static\bild1\Evakuierung_F.png"; DestDir: "{app}\static\bild1"; Flags: ignoreversion
-Source: "{#SrcDir}\static\bild2\Broadcast_unterbrochen-E_D_F.png"; DestDir: "{app}\static\bild2"; Flags: ignoreversion
-Source: "{#SrcDir}\static\bild3\Artist_kann_nicht_auftreten_E-D_F.png"; DestDir: "{app}\static\bild3"; Flags: ignoreversion
-Source: "{#SrcDir}\static\bild4\lockdown_E_D_F.png"; DestDir: "{app}\static\bild4"; Flags: ignoreversion
-Source: "{#SrcDir}\static\bild5\Message5.jpg"; DestDir: "{app}\static\bild5"; Flags: ignoreversion
-Source: "{#SrcDir}\static\bild6\colorBars75.jpg"; DestDir: "{app}\static\bild6"; Flags: ignoreversion
-Source: "{#SrcDir}\static\bild6\message6.png"; DestDir: "{app}\static\bild6"; Flags: ignoreversion
-Source: "{#SrcDir}\static\bild7\message7.png"; DestDir: "{app}\static\bild7"; Flags: ignoreversion
+; Emergency boards (made with the editor, 2026-11-21). Only on a first installation:
+; on an update the boards on this PC stay exactly as they are (the editor may have changed them).
+Source: "{#SrcDir}\static\bild1\*.png"; DestDir: "{app}\static\bild1"; Flags: ignoreversion; Check: IsFirstInstall
+Source: "{#SrcDir}\static\bild2\*.png"; DestDir: "{app}\static\bild2"; Flags: ignoreversion; Check: IsFirstInstall
+Source: "{#SrcDir}\static\bild3\*.png"; DestDir: "{app}\static\bild3"; Flags: ignoreversion; Check: IsFirstInstall
+Source: "{#SrcDir}\static\bild4\*.png"; DestDir: "{app}\static\bild4"; Flags: ignoreversion; Check: IsFirstInstall
+Source: "{#SrcDir}\static\bild5\*.png"; DestDir: "{app}\static\bild5"; Flags: ignoreversion; Check: IsFirstInstall
+Source: "{#SrcDir}\static\bild6\*.png"; DestDir: "{app}\static\bild6"; Flags: ignoreversion; Check: IsFirstInstall
+Source: "{#SrcDir}\static\bild7\*.png"; DestDir: "{app}\static\bild7"; Flags: ignoreversion; Check: IsFirstInstall
+Source: "{#SrcDir}\static\bild8\*.png"; DestDir: "{app}\static\bild8"; Flags: ignoreversion; Check: IsFirstInstall
+; Emergency board editor (C#, .NET 10). Its project and DeepL key are written at runtime
+; into {app}\editor (Projekt.json, Uebersetzer.json) and are never shipped or overwritten.
+; The source is in {#SrcDir}\editor-source and is NOT shipped. Build it into {#SrcDir}\editor first:
+;   dotnet publish editor-source\Kiosk3Editor2.csproj -c Release --self-contained false -o editor
+;   then delete editor\Alt-Projekt.json, editor\Vorlagen.json and editor\*.pdb
+Source: "{#SrcDir}\editor\*"; DestDir: "{app}\editor"; Excludes: "Projekt.json*,Uebersetzer.json,Editor.lock,*.pdb"; Flags: ignoreversion; Tasks: editor
 Source: "{#SrcDir}\omt\*.dll"; DestDir: "{app}\omt"; Flags: recursesubdirs ignoreversion
 Source: "{#SrcDir}\omt\*.exe"; DestDir: "{app}\omt"; Flags: recursesubdirs ignoreversion
 Source: "{#SrcDir}\omt\*.deps.json"; DestDir: "{app}\omt"; Flags: recursesubdirs ignoreversion
@@ -80,6 +87,8 @@ Name: "{commonstartup}\Kiosk 3"; Filename: "{app}\kiosk.bat"; WorkingDir: "{app}
 Name: "{group}\Kiosk 3 Start"; Filename: "{app}\kiosk.bat"; WorkingDir: "{app}"; IconFilename: "{app}\Images\kiosk.ico"
 Name: "{group}\Kiosk 3 Start (Chrome)"; Filename: "{app}\kiosk_chrome.bat"; WorkingDir: "{app}"; IconFilename: "{app}\Images\kiosk.ico"
 Name: "{group}\Kiosk 3 Admin (this computer)"; Filename: "{cmd}"; Parameters: "/c start """" http://localhost:53101/admin"; Flags: runminimized; IconFilename: "{app}\Images\kiosk.ico"
+Name: "{group}\Kiosk 3 Emergency Board Editor"; Filename: "{app}\editor\Kiosk3Editor.exe"; WorkingDir: "{app}\editor"; Tasks: editor
+Name: "{commondesktop}\Kiosk 3 Board Editor"; Filename: "{app}\editor\Kiosk3Editor.exe"; WorkingDir: "{app}\editor"; Tasks: editor and desktopicon
 Name: "{group}\Kiosk 3 Folder"; Filename: "{app}"
 Name: "{group}\Uninstall Kiosk 3"; Filename: "{uninstallexe}"
 
@@ -93,6 +102,16 @@ Filename: "{app}\kiosk.bat"; Description: "Start the kiosk now"; WorkingDir: "{a
 Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""Kiosk 3 (TCP 53101)"""; Flags: runhidden; RunOnceId: "DelFirewall"
 
 [Code]
+var
+  FirstInstall: Boolean;
+
+// First installation = no button_config.json in the target folder yet.
+// Decided once in ssInstall, before any file is copied (button_config.json comes later in [Files]).
+function IsFirstInstall: Boolean;
+begin
+  Result := FirstInstall;
+end;
+
 function B2I(B: Boolean): String;
 begin
   if B then Result := '1' else Result := '0';
@@ -137,6 +156,8 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 var Output: TExecOutput; Code, I: Integer; Address: String;
 begin
+  if CurStep = ssInstall then
+    FirstInstall := not FileExists(ExpandConstant('{app}\button_config.json'));
   if (CurStep <> ssPostInstall) or not WizardIsTaskSelected('chromeaudio') then Exit;
   AddKioskOrigin('http://192.168.1.113:53101');
   AddKioskOrigin('http://localhost:53101');

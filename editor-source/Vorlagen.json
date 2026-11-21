@@ -1,0 +1,157 @@
+[
+  {
+    "Number": 1,
+    "Separate": true,
+    "Label": "Evacuation",
+    "Texts": {
+      "deu": {
+        "Title": "Evakuierung",
+        "Body": "Bitte Halle sofort verlassen\nBefolgen Sie die Anweisungen des Personals"
+      },
+      "eng": {
+        "Title": "Evacuation",
+        "Body": "please leave the venue immediately\nfollow marked exits"
+      },
+      "fra": {
+        "Title": "Evacuation",
+        "Body": "veuillez quitter la salle immédiatement\nSuivez les instructions du personnel"
+      }
+    }
+  },
+  {
+    "Number": 2,
+    "Label": "Broadcast cut off",
+    "Texts": {
+      "deu": {
+        "Title": "Die Live-Übertragung kann nicht fortgesetzt werden.",
+        "Body": "Es wird eine aufgezeichnete Probe gezeigt"
+      },
+      "eng": {
+        "Title": "We are unable to continue the live broadcast",
+        "Body": "A prerecorded rehearsal will be shown"
+      },
+      "fra": {
+        "Title": "La diffusion en direct ne peut pas continuer",
+        "Body": "Une répétition enregistrée est diffusée"
+      }
+    }
+  },
+  {
+    "Number": 3,
+    "Label": "Artist cannot perform",
+    "Texts": {
+      "deu": {
+        "Title": "Der Künstler kann leider nicht auftreten",
+        "Body": "Wir zeigen eine Aufzeichnung"
+      },
+      "eng": {
+        "Title": "The artist cannot perform live",
+        "Body": "We are showing a prerecorded performance"
+      },
+      "fra": {
+        "Title": "L’artiste ne peut malheureusement pas se produire",
+        "Body": "Nous montrons une performance enregistrée"
+      }
+    }
+  },
+  {
+    "Number": 4,
+    "Label": "Lock Down",
+    "Texts": {
+      "deu": {
+        "Title": "LOCKDOWN",
+        "Body": "Bitte in der Halle bleiben.\nWarten Sie auf weitere Anweisungen"
+      },
+      "eng": {
+        "Title": "LOCKDOWN",
+        "Body": "Please remain in the arena!\nAwait further instructions."
+      },
+      "fra": {
+        "Title": "LOCKDOWN",
+        "Body": "Veuillez rester dans la salle!\nAttendez d’autres instructions."
+      }
+    }
+  },
+  {
+    "Number": 5,
+    "Label": "Fire",
+    "Texts": {
+      "deu": {
+        "Title": "Es wurde ein Feuer im Gebäude gemeldet.",
+        "Body": "Bitte verlassen Sie das Gebäude sofort über den nächstgelegenen Notausgang."
+      },
+      "eng": {
+        "Title": "A fire has been reported in the building.",
+        "Body": "Please evacuate immediately using the nearest emergency exit."
+      },
+      "fra": {
+        "Title": "Un incendie a été signalé dans le bâtiment.",
+        "Body": "Veuillez évacuer immédiatement par la sortie de secours la plus proche."
+      }
+    }
+  },
+  {
+    "Number": 6,
+    "Label": "Power outage",
+    "Texts": {
+      "deu": {
+        "Title": "STROMAUSFALL",
+        "Body": "Derzeit ist unser Gebäude von einem Stromausfall betroffen. Die Mitarbeiter arbeiten an der Wiederherstellung der Stromversorgung."
+      },
+      "eng": {
+        "Title": "POWER OUTAGE",
+        "Body": "We are currently experiencing a power outage affecting our building. Crews are working to restore power."
+      },
+      "fra": {
+        "Title": "PANNE D'ÉLECTRICITÉ",
+        "Body": "Actuellement, notre bâtiment est touché par une panne d'électricité. Le personnel s'emploie à rétablir le courant."
+      }
+    }
+  },
+  {
+    "Number": 7,
+    "Label": "Weather",
+    "Texts": {
+      "deu": {
+        "Title": "WETTER ALARM",
+        "Body": "Alle Zuschauer müssen das Festivalgelände sofort verlassen, da sich gefährliches Wetter nähert. Befolgen Sie die Anweisungen des Personals und verlassen Sie das Gelände in aller Ruhe über die gekennzeichneten Ausgänge. Ihre Sicherheit ist unsere Priorität."
+      },
+      "eng": {
+        "Title": "WEATHER ALERT",
+        "Body": "All spectators must leave the festival grounds immediately due to dangerous weather approaching. Follow staff instructions and evacuate calmly via marked exits. Your safety is our priority."
+      },
+      "fra": {
+        "Title": "ALERTE MÉTÉO",
+        "Body": "Des conditions météorologiques dangereuses approchent. Tous les spectateurs doivent quitter l’enceinte du festival immédiatement. Veuillez suivre les instructions du personnel et emprunter les sorties indiquées. Votre sécurité est notre priorité."
+      }
+    }
+  },
+  {
+    "Number": 8,
+    "Label": "Cancel Show",
+    "Texts": {
+      "deu": {
+        "Title": "Abbruch der Veranstaltung",
+        "Body": "Die Veranstaltung kann leider nicht fortgesetzt werden.\nBitte verlassen Sie die Halle ruhig und geordnet.\nBefolgen Sie die Anweisungen des Personals."
+      },
+      "eng": {
+        "Title": "Show Cancellation",
+        "Body": "Unfortunately, the show cannot continue.\nPlease leave the arena calmly and in an orderly manner.\nFollow the instructions of the staff."
+      },
+      "fra": {
+        "Title": "Arrêt définitif du spectacle",
+        "Body": "Malheureusement, le spectacle ne peut pas se poursuivre.\nVeuillez quitter la salle dans le calme et de manière ordonnée.\nSuivez les instructions du personnel."
+      }
+    }
+  },
+  {
+    "Number": 9,
+    "Label": "Notice 9",
+    "Texts": {}
+  },
+  {
+    "Number": 10,
+    "Label": "Notice 10",
+    "Texts": {}
+  }
+]

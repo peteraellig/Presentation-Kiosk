@@ -18,7 +18,7 @@ window.addEventListener('pageshow', event => { if (event.persisted) socket.conne
 
 function report(run, phase, message = '') {
   if (socket.connected && (run.media.revision === latest || run === active)) {
-    socket.emit('playback_report', {revision: run.media.revision, phase, file: run.file, message});
+    socket.emit('playback_report', {revision: run.media.revision, phase, file: run.file, fileVersion: run.node?.dataset.version, message});
   }
 }
 
@@ -45,6 +45,7 @@ async function mediaList(run) {
   if (type === 'video' || type === 'image') return [src];
   const folder = type === 'playlist' ? 'videos_playlist' : String(src).replaceAll('\\', '/').replace(/\/+$/, '');
   const response = await fetch('/filelist?folder=' + encodeURIComponent(folder), {
+    cache: 'no-store',
     signal: AbortSignal.any([run.controller.signal, AbortSignal.timeout(15000)])
   });
   if (!response.ok) throw new Error(folder + ' (HTTP ' + response.status + ')');
@@ -54,11 +55,56 @@ async function mediaList(run) {
   return files.map(name => folder + '/' + name);
 }
 
+async function imageVersion(file, signal) {
+  const path = '/static/' + file.split('/').map(encodeURIComponent).join('/');
+  const response = await fetch(path, {method: 'HEAD', cache: 'no-store', signal});
+  if (!response.ok) throw new Error(file + ' (HTTP ' + response.status + ')');
+  return response.headers.get('ETag') || response.headers.get('Last-Modified') || String(Date.now());
+}
+
+function scheduleImageCheck(run) {
+  run.timer = setTimeout(() => refreshImage(run), (run.media.seconds ?? 3) * 1000);
+}
+
+async function refreshImage(run) {
+  const {signal} = run.controller;
+  try {
+    const files = await mediaList(run);
+    const previous = files.indexOf(run.lastAttempt ?? run.file);
+    const index = (previous + 1) % files.length;
+    const file = files[index];
+    if (signal.aborted || active !== run) return;
+    run.lastAttempt = file;
+    const version = await imageVersion(file, AbortSignal.any([signal, AbortSignal.timeout(15000)]));
+    if (signal.aborted || active !== run) return;
+    if (file === run.file && version === run.node.dataset.version) {
+      if (run.refreshFailed) report(run, 'playing');
+      run.refreshFailed = false;
+      scheduleImageCheck(run);
+      return;
+    }
+    const node = await prepare(run, file, version);
+    if (signal.aborted || active !== run) { dispose(node); return; }
+    run.refreshFailed = false;
+    run.files = files;
+    display(run, node, index);
+  } catch (error) {
+    if (signal.aborted || active !== run) return;
+    run.refreshFailed = true;
+    report(run, 'error', error.message);
+    scheduleImageCheck(run);
+  }
+}
+
 // Prepare off screen. The currently visible element keeps its source, timer and audio.
-async function prepare(run, file) {
+async function prepare(run, file, version) {
   const video = ['video', 'playlist'].includes(run.media.type);
   const node = document.createElement(video ? 'video' : 'img');
   const signal = AbortSignal.any([run.controller.signal, AbortSignal.timeout(15000)]);
+  const path = '/static/' + file.split('/').map(encodeURIComponent).join('/');
+  if (!video && version === undefined) version = await imageVersion(file, signal);
+  const url = video ? path : path + '?v=' + encodeURIComponent(version);
+  if (!video) node.dataset.version = version;
   let cancel;
   try {
     await new Promise((resolve, reject) => {
@@ -66,7 +112,6 @@ async function prepare(run, file) {
       signal.throwIfAborted();
       signal.addEventListener('abort', cancel, {once: true});
       node.onerror = () => reject(new Error(file + ' – ' + (node.error?.message || 'cannot load or decode')));
-      const url = '/static/' + file.split('/').map(encodeURIComponent).join('/');
       if (video) {
         node.playsInline = true;
         node.preload = 'auto';
@@ -127,9 +172,7 @@ function display(run, node, index) {
   dispose(previous);
   soundButton.hidden = true;
   const next = () => advance(run);
-  if (run.media.type === 'slideshow' && run.files.length > 1) {
-    run.timer = setTimeout(next, (run.media.seconds ?? 3) * 1000);
-  }
+  if (run.media.type === 'slideshow' || run.media.type === 'image') scheduleImageCheck(run);
   if (run.media.type === 'playlist') node.onended = next;
   node.onerror = () => recover(run, node);
   if (node.tagName === 'VIDEO') {
@@ -170,7 +213,7 @@ async function recover(run, failedNode, error = failedNode.error) {
   }
   if (active === restored && socket.connected) {
     socket.emit('playback_report', {revision: run.media.revision, phase: 'restored',
-      restored: restored.media.revision, file: restored.file, message});
+      restored: restored.media.revision, file: restored.file, fileVersion: restored.node.dataset.version, message});
   }
 }
 

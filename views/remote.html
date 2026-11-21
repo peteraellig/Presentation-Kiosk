@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- Presentation System Kiosk 2.0 · Peter Aellig · remote.html -->
+<!-- Kiosk3 3.18 · © Peter Aellig · remote.html -->
 <html lang="de">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Remote – Presentation System</title>
+  <title>Kiosk3 – Remote</title>
   <link rel="stylesheet" href="/static/style.css">
   <script src="/static/socket.io.min.js"></script>
 </head>
@@ -17,6 +17,7 @@
       <span class="pill" id="pill-screen"><span class="dot"></span>Presentation screen</span>
       <span class="pill" id="pill-omt"><span class="dot"></span>OMT</span>
     </div>
+    <span class="kiosk-brand">Kiosk3 3.18 · © Peter Aellig</span>
   </div>
 
 
@@ -32,7 +33,7 @@
   </div>
 </div>
 
-<div class="footer" id="footer"><div class="banner" id="status" role="alert"></div>Presentation System Kiosk 2.0 · Peter Aellig · <span id="clock"></span></div>
+<div class="footer" id="footer"><div class="banner" id="status" role="alert"></div><span id="clock"></span></div>
 
 <script>
   const socket = io();
@@ -120,8 +121,8 @@
     }
   }
 
-  function showPreview(media, file) {
-    const key = JSON.stringify([media?.revision, file]);
+  function showPreview(media, file, version) {
+    const key = JSON.stringify([media?.revision, file, version]);
     if (previewKey === key) return;
     previewKey = key;
     if (!media || !file) {
@@ -134,7 +135,8 @@
       element.muted = true;
       element.autoplay = element.loop = element.playsInline = true;
     }
-    element.src = '/static/' + file.split('/').map(encodeURIComponent).join('/');
+    element.src = '/static/' + file.split('/').map(encodeURIComponent).join('/') +
+      (version ? '?v=' + encodeURIComponent(version) : '');
     previewDiv.replaceChildren(element);
   }
 
@@ -180,7 +182,7 @@
     statusDiv.style.display = messages.length ? 'block' : 'none';
     current = screen?.media || {};
     markActive();
-    showPreview(screen?.media, screen?.file);
+    showPreview(screen?.media, screen?.file, screen?.fileVersion);
   });
 
   function updateClock() {

@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "Kiosk3Editor/3.18.0": {
+        "runtime": {
+          "Kiosk3Editor.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Kiosk3Editor/3.18.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

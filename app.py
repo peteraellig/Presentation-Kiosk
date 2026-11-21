@@ -1,4 +1,4 @@
-#Kiosk 1.4.6
+# Kiosk3 3.18 · © Peter Aellig
 
 import os
 import posixpath
@@ -45,7 +45,7 @@ APP_START_TS = time.time()
 
 def print_terminal_header(ip, port, ips):
     print("\n-------------------------------------------------------------")
-    print("\n          Presentation System Kiosk 2.0 Peter Aellig          ")
+    print("\n          Kiosk3 3.18 · © Peter Aellig          ")
     print("\n-------------------------------------------------------------")
     print("\n             You can access the display at:                  ")
     print(f"   Presentation:  http://{ip}:{port}")
@@ -283,7 +283,7 @@ def presentation():
 def authenticate():
     # Liefert eine 401-Fehlermeldung mit Basic-Auth-Challenge
     return Response(
-        'Authentication required', 401,
+        'Kiosk3: Authentication required', 401,
         {'WWW-Authenticate': 'Basic realm="Login Required"'}
     )
 
@@ -404,7 +404,7 @@ OMT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'omt')
 OMT_EXE = os.path.join(OMT_DIR, 'PresenterOmt.exe')
 OMT_SETTINGS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'omt_settings.json')
 OMT_FORMATS = ["1080i50", "1080i59.94", "1080i60", "1080p50", "1080p59.94", "1080p60", "720p50", "720p59.94", "720p60"]
-OMT_SETTINGS = {"enabled": False, "name": "Kiosk Presenter", "format": "1080i50", "gain_db": -5.0}
+OMT_SETTINGS = {"enabled": False, "name": "Kiosk3 Presenter", "format": "1080i50", "gain_db": -5.0}
 omt_proc = None
 omt_status = {"fps": 0, "connections": 0, "message": ""}
 omt_lock = threading.Lock()
@@ -414,7 +414,7 @@ def load_omt_settings():
         with open(OMT_SETTINGS_PATH, 'r') as f:
             data = json.load(f)
         OMT_SETTINGS["enabled"] = bool(data.get("enabled", False))
-        OMT_SETTINGS["name"] = str(data.get("name", OMT_SETTINGS["name"]))[:60] or "Kiosk Presenter"
+        OMT_SETTINGS["name"] = str(data.get("name", OMT_SETTINGS["name"]))[:60] or "Kiosk3 Presenter"
         if data.get("format") in OMT_FORMATS:
             OMT_SETTINGS["format"] = data["format"]
         OMT_SETTINGS["gain_db"] = max(-60.0, min(12.0, float(data.get("gain_db", -5.0))))
@@ -687,23 +687,25 @@ def handle_playback_report(data):
     if state is None or not isinstance(data, dict):
         return
     phase = data.get("phase")
+    file_version = str(data.get("fileVersion", ""))[:256]
     if data.get("revision") != revision:
         # The previous slideshow can still advance while a replacement loads or fails.
         previous = state["media"]
         if phase == "playing" and previous and data.get("revision") == previous["revision"]:
             state["file"] = str(data.get("file", ""))[:1024]
+            state["fileVersion"] = file_version
             publish_status()
         return
     if phase == "restored":
         previous = state.get("previous")
         if not previous or data.get("restored") != previous["revision"]:
             return
-        state.update(phase="error", media=previous, file=str(data.get("file", ""))[:1024],
+        state.update(phase="error", media=previous, fileVersion=file_version, file=str(data.get("file", ""))[:1024],
                      message=str(data.get("message", "Playback interrupted"))[:512])
     elif phase == "playing":
         if state["media"] != current_media:
             state["previous"] = state["media"]
-        state.update(phase=phase, media=current_media.copy(), file=str(data.get("file", ""))[:1024], message="")
+        state.update(phase=phase, media=current_media.copy(), fileVersion=file_version, file=str(data.get("file", ""))[:1024], message="")
     elif phase == "error":
         state.update(phase=phase, message=str(data.get("message", "Media error"))[:512])
     else:
