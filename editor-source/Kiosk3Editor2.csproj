@@ -8,7 +8,7 @@
     <AssemblyName>Kiosk3Editor</AssemblyName>
     <RootNamespace>Kiosk3</RootNamespace>
     <ApplicationIcon>kiosk.ico</ApplicationIcon>
-    <Version>3.18.0</Version>
+    <Version>3.24.0</Version>
     <Product>Kiosk3 Notfalltafel-Editor</Product>
   </PropertyGroup>
   <ItemGroup>

@@ -3,7 +3,23 @@ Third-party licenses used by Kiosk 3
 
 Open Media Transport (OMT)  -  MIT License
   File: OMT-LICENSE.txt
-  Used by the "Presenter OMT" output (libomt.dll, libvmx.dll) to send the presenter picture and sound as OMT.
+  Used by the "Presenter OMT" output (libomt.dll, libvmx.dll) to send the presenter picture and sound as OMT,
+  and by the live input (LiveIn.exe) to receive OMT sources.
   Project: https://github.com/openmediatransport
+
+Vortice.Windows (Vortice.Direct3D11, Vortice.DXGI, Vortice.MediaFoundation, Vortice.Direct2D1, Vortice.DirectX, Vortice.Mathematics)  -  MIT License
+  Copyright (c) Amer Koleci and Contributors
+  Used by PresenterOmt.exe (picture capture) and LiveIn.exe (H.264 encoding with Windows Media Foundation,
+  still pictures for the remote page with the Windows Imaging Component).
+  Project: https://github.com/amerkoleci/Vortice.Windows
+
+NDI (Network Device Interface)
+  The live input can receive NDI sources through the NDI runtime installed on the PC (NDI Tools or NDI Runtime from https://ndi.video).
+  Kiosk 3 does not ship any NDI files. NDI® is a registered trademark of Vizrt NDI AB.
+
+SharpGen.Runtime  -  MIT License
+  Copyright (c) SharpGenTools contributors
+  COM interop runtime used by the Vortice libraries.
+  Project: https://github.com/SharpGenTools/SharpGenTools
 
 The license text must stay with every copy of the software. Do not delete this folder.

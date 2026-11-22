@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Kiosk3 3.18 · © Peter Aellig · admin.html -->
+<!-- Kiosk3 3.24 · © Peter Aellig · admin.html -->
 <html lang="de">
 <head>
   <meta charset="UTF-8">
@@ -67,7 +67,7 @@
   <div class="topbar">
     <h1>Admin Dashboard</h1>
     <button id="logout" type="button">Abmelden</button>
-    <span class="kiosk-brand">Kiosk3 3.18 · © Peter Aellig</span>
+    <span class="kiosk-brand">Kiosk3 3.24 · © Peter Aellig</span>
   </div>
 
   <div class="card">
@@ -80,6 +80,7 @@
       <div class="stat"><div class="k">Presentation screen</div><div class="v" id="presentation-connected">-</div></div>
       <div class="stat"><div class="k">Remote</div><div class="v" id="remote-connected">-</div></div>
       <div class="stat"><div class="k">Daily reset at <span id="schedule-time">--:--</span></div><div class="v" id="schedule-src">-</div></div>
+      <div class="stat"><div class="k">Live input (OMT)</div><div class="v" id="live-state">-</div></div>
       <div class="stat"><div class="k">Server heartbeat</div><div class="v" id="hb-wrap"><span id="heartbeat">checking...</span><span class="hb-dot" id="hb-dot"></span></div></div>
     </div>
   </div>
@@ -105,6 +106,7 @@
       </table>
     </div>
     <p class="hint">Red buttons need a second tap on the remote (protection against accidental presses). Use "\n" in a label for a line break.</p>
+    <p class="hint">Type "live" shows an OMT or NDI source (Source… lists the sources in the network; NDI needs NDI Tools or the NDI Runtime from ndi.video on this PC). Live video only works when the presentation runs on this server PC (and in the OMT output); presentation screens on other computers cannot show it.</p>
     <div class="actions" style="margin-top:14px">
       <button class="btn" onclick="saveButtonConfig()">Save button configuration</button>
     </div>
@@ -149,6 +151,15 @@
     <div class="actions" style="margin-top:14px">
       <button class="btn" onclick="saveOmt()">Save OMT settings</button>
     </div>
+  </div>
+
+  <div class="card">
+    <h2>Live input (OMT / NDI)</h2>
+    <form id="live-encoder-form" class="actions">
+      <label>H.264 encoder <select id="live-encoder" style="background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit"></select></label>
+      <button class="btn" type="submit">Save encoder</button>
+    </form>
+    <p class="hint">Automatic uses the first hardware encoder Windows offers (NVIDIA NVENC, Intel Quick Sync or AMD), the software encoder only without one. A chosen encoder that this PC does not have falls back to automatic. The encoder in use is shown in the status tile "Live input (OMT)" while a live source is on air. Saving restarts the live input; a live picture on screen pauses for a moment.</p>
   </div>
 
   <div class="card">
@@ -275,13 +286,14 @@
         <td><input type="checkbox" id="enable_${i}" ${btn.enabled ? 'checked' : ''}></td>
         <td><input type="text" id="label_${i}" value="${esc(btn.label)}"></td>
         <td><select id="type_${i}">
-          ${['slideshow', 'video', 'playlist'].map(t => `<option value="${t}" ${btn.type === t ? 'selected' : ''}>${t}</option>`).join('')}
+          ${['slideshow', 'video', 'playlist', 'live'].map(t => `<option value="${t}" ${btn.type === t ? 'selected' : ''}>${t}</option>`).join('')}
         </select></td>
-        <td><div class="src-cell"><input type="text" id="src_${i}" value="${esc(btn.src)}"><button class="btn secondary" type="button" onclick="openPicker(${i})">Browse…</button></div></td>
+        <td><div class="src-cell"><input type="text" id="src_${i}" value="${esc(btn.src)}"><button class="btn secondary" type="button" id="pick_${i}" onclick="openPicker(${i})">${pickerLabel(btn.type)}</button></div></td>
         <td><select id="color_${i}">
           ${COLORS.map(c => `<option value="${c}" ${(btn.color || 'blue') === c ? 'selected' : ''}>${c}</option>`).join('')}
         </select></td>`;
       body.appendChild(tr);
+      $(`type_${i}`).addEventListener('change', e => { $(`pick_${i}`).textContent = pickerLabel(e.target.value); });
     });
     socket.emit('get_streamdeck_input_lock');
   }
@@ -295,6 +307,7 @@
     const type = $(`type_${i}`).value;
     if (type === 'playlist') { toast('Playlist always uses the folder videos_playlist/'); return; }
     pickerRow = i;
+    if (type === 'live') { openLivePicker(); return; }
     $('picker-title').textContent = type === 'video' ? 'Select a video file' : 'Select a slideshow folder';
     $('picker-choose-folder').style.display = type === 'slideshow' ? '' : 'none';
     // Start im Ordner des aktuellen Eintrags
@@ -305,6 +318,68 @@
   }
 
   function closePicker() { $('picker').classList.remove('show'); }
+
+  // the button next to the source field: "Source…" for live sources, "Browse…" for files and folders
+  function pickerLabel(type) { return type === 'live' ? 'Source…' : 'Browse…'; }
+
+  // "ndi:HOST (Name)" = NDI source, anything else = OMT source
+  function liveKind(src) { return /^ndi:/i.test(src) ? 'NDI' : 'OMT'; }
+  function liveName(src) { return String(src).replace(/^ndi:/i, ''); }
+
+  // Live input: list of OMT and NDI sources found in the network (via LiveIn.exe)
+  async function openLivePicker() {
+    $('picker-title').textContent = 'Select a live source';
+    $('picker-path').textContent = 'OMT / NDI network';
+    $('picker-choose-folder').style.display = 'none';
+    const list = $('picker-list');
+    list.innerHTML = '<p class="hint" style="padding:12px">Searching…</p>';
+    $('picker').classList.add('show');
+    let data;
+    try { data = await adminRequest('/live_sources'); }
+    catch (e) { list.innerHTML = `<p class="hint" style="padding:12px">${esc(e.message)}</p>`; return; }
+    list.innerHTML = '';
+    data.sources.forEach(s => {
+      const d = document.createElement('div');
+      d.className = 'item';
+      d.innerHTML = `<span class="ico">📡</span><strong style="width:3.2em">${liveKind(s)}</strong><span>${esc(liveName(s))}</span>`;
+      d.onclick = () => { $(`src_${pickerRow}`).value = s; closePicker(); };
+      list.appendChild(d);
+    });
+    if (!data.sources.length) {
+      list.innerHTML = `<p class="hint" style="padding:12px">${esc(data.error || 'No OMT or NDI source found. Sources appear a few seconds after they start; open this list again.')}</p>`;
+    }
+    if (!data.error && !data.ndi) {
+      list.insertAdjacentHTML('beforeend', `<p class="hint" style="padding:8px 12px">NDI: ${esc(data.ndi_status || 'not available')}</p>`);
+    }
+  }
+
+  async function loadLiveStatus() {
+    try {
+      const d = await adminRequest('/live_sources');
+      let text = !d.exe_found ? 'LiveIn.exe missing' : !d.running ? 'Not running' :
+        (d.status.line.split('|')[1] || '').trim() || 'Ready, no source in use';
+      const ndi = d.sources.filter(s => liveKind(s) === 'NDI').length;
+      $('live-state').textContent = text + ` · found: ${d.sources.length - ndi} OMT, ` + (d.ndi ? `${ndi} NDI` : 'NDI not installed');
+    } catch (e) { /* server restarting */ }
+  }
+  setInterval(loadLiveStatus, 3000);
+
+  async function loadLiveEncoder() {
+    try {
+      const {encoder, choices} = await adminRequest('/admin/live-encoder');
+      const select = $('live-encoder');
+      select.replaceChildren(...choices.map(([key, label]) => new Option(label, key)));
+      select.value = encoder;
+    } catch (error) { toast(error.message, true); }
+  }
+  $('live-encoder-form').onsubmit = async event => {
+    event.preventDefault();
+    try {
+      await adminRequest('/admin/live-encoder', {encoder: $('live-encoder').value});
+      toast('Encoder saved, live input restarted');
+    } catch (error) { toast(error.message, true); }
+  };
+  loadLiveEncoder();
 
   async function loadDir(path) {
     let data;
@@ -587,6 +662,7 @@
   loadSlideTimes();
   loadApiSettings();
   loadOmt(true);
+  loadLiveStatus();
 </script>
 </body>
 </html>

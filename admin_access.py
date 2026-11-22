@@ -46,7 +46,7 @@ def require_admin():
 PAGE = """<!doctype html><html lang="de"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Kiosk3 – Administration</title><link rel="stylesheet" href="/static/style.css">
-<main class="wrap"><div class="topbar"><h1>{{ title }}</h1><span class="kiosk-brand">Kiosk3 3.18 · © Peter Aellig</span></div><section class="card">
+<main class="wrap"><div class="topbar"><h1>{{ title }}</h1><span class="kiosk-brand">Kiosk3 3.24 · © Peter Aellig</span></div><section class="card">
 {% if message %}<p role="alert">{{ message }}</p>{% endif %}
 {% if form %}<form method="post">
 <input type="hidden" name="csrf" value="{{ csrf }}">

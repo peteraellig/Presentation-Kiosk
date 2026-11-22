@@ -8,7 +8,7 @@ namespace Kiosk3;
 /// </summary>
 public sealed class MainForm : Form
 {
-    public const string AppVersion = "3.18";
+    public const string AppVersion = "3.24";
     readonly Project p;
     readonly ComboBox noticeChoice = new() { DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 11f), Dock = DockStyle.Fill };
     readonly TabControl tabs = new() { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 9.5f) };

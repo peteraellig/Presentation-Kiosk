@@ -24,6 +24,7 @@ function report(run, phase, message = '') {
 
 function dispose(node) {
   if (!node) return;
+  if (node._live) { node._live.close(); node.remove(); return; }
   node.onended = node.onerror = node.onload = node.onloadeddata = null;
   if (node.tagName === 'VIDEO') {
     node.pause();
@@ -42,7 +43,7 @@ function stop(run) {
 
 async function mediaList(run) {
   const {type, src} = run.media;
-  if (type === 'video' || type === 'image') return [src];
+  if (type === 'video' || type === 'image' || type === 'live') return [src];
   const folder = type === 'playlist' ? 'videos_playlist' : String(src).replaceAll('\\', '/').replace(/\/+$/, '');
   const response = await fetch('/filelist?folder=' + encodeURIComponent(folder), {
     cache: 'no-store',
@@ -96,8 +97,35 @@ async function refreshImage(run) {
   }
 }
 
+// Live source (OMT, or NDI as "ndi:HOST (Name)"): ready when the first picture has arrived (the on-air item stays until then).
+async function prepareLive(run, source) {
+  const signal = AbortSignal.any([run.controller.signal, AbortSignal.timeout(15000)]);
+  let node, cancel;
+  try {
+    await new Promise((resolve, reject) => {
+      cancel = () => reject(new Error(source + ' – no picture from this live source'));
+      signal.throwIfAborted();
+      signal.addEventListener('abort', cancel, {once: true});
+      node = createLiveNode(source, run.media.live_port, role === 'omt', {
+        onFirstPicture: resolve,
+        onSignal: (lost, message) => {
+          if (active !== run || run.node !== node) return;
+          report(run, lost ? 'error' : 'playing', message);
+        }
+      });
+    });
+    return node;
+  } catch (error) {
+    dispose(node);
+    throw error;
+  } finally {
+    signal.removeEventListener('abort', cancel);
+  }
+}
+
 // Prepare off screen. The currently visible element keeps its source, timer and audio.
 async function prepare(run, file, version) {
+  if (run.media.type === 'live') return prepareLive(run, file);
   const video = ['video', 'playlist'].includes(run.media.type);
   const node = document.createElement(video ? 'video' : 'img');
   const signal = AbortSignal.any([run.controller.signal, AbortSignal.timeout(15000)]);
@@ -157,6 +185,10 @@ async function playVisibleVideo(run, node) {
 
 soundButton.onclick = async () => {
   const node = active?.node;
+  if (node?._live) {
+    try { await node._live.sound.resume(); soundButton.hidden = !node._live.sound.blocked; } catch {}
+    return;
+  }
   if (node?.tagName !== 'VIDEO') return;
   node.muted = false;
   try { await node.play(); soundButton.hidden = true; }
@@ -175,7 +207,18 @@ function display(run, node, index) {
   if (run.media.type === 'slideshow' || run.media.type === 'image') scheduleImageCheck(run);
   if (run.media.type === 'playlist') node.onended = next;
   node.onerror = () => recover(run, node);
-  if (node.tagName === 'VIDEO') {
+  if (node._live) {
+    node._live.show();
+    report(run, 'playing');
+    // Chrome without a saved sound permission keeps the AudioContext suspended
+    // the button follows the AudioContext state, so it also disappears when the sound starts a moment later
+    const sound = node._live.sound;
+    sound.ready.then(() => {
+      const update = () => { if (active === run && run.node === node && role === 'screen') soundButton.hidden = !sound.blocked; };
+      update();
+      sound.ctx?.addEventListener('statechange', update);
+    }).catch(() => {});
+  } else if (node.tagName === 'VIDEO') {
     playVisibleVideo(run, node).then(started => { if (started) report(run, 'playing'); });
   } else {
     report(run, 'playing');
@@ -188,6 +231,8 @@ function keepPrevious(run) {
   stop(fallback);
   fallback = run;
   if (!run) return;
+  // a live source is not kept in the background (it would keep receiving 200 MB/s)
+  if (run.node?._live) { stop(run); fallback = null; return; }
   run.controller.abort();
   clearTimeout(run.timer);
   run.node.onended = run.node.onerror = null;

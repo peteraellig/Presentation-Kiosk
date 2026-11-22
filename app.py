@@ -1,4 +1,4 @@
-# Kiosk3 3.18 · © Peter Aellig
+# Kiosk3 3.24 · © Peter Aellig
 
 import os
 import posixpath
@@ -13,8 +13,10 @@ import re
 import secrets
 import atexit
 import subprocess
+import urllib.parse
+import urllib.request
 
-import psutil   
+import psutil
 
 from datetime import datetime, time as dtime, timedelta
 from flask import Flask, jsonify, request, Response, abort, send_from_directory
@@ -30,6 +32,7 @@ last_net = psutil.net_io_counters()
 
 # ─── Port festlegen ─────────────────────────────────────────────
 port = PORT
+LIVE_PORT = port + 1   # LiveIn.exe (OMT input), only on 127.0.0.1
 
 # ─── Schutz vor doppeltem Start ────────────────────────────────
 def is_port_in_use(p):
@@ -45,7 +48,7 @@ APP_START_TS = time.time()
 
 def print_terminal_header(ip, port, ips):
     print("\n-------------------------------------------------------------")
-    print("\n          Kiosk3 3.18 · © Peter Aellig          ")
+    print("\n          Kiosk3 3.24 · © Peter Aellig          ")
     print("\n-------------------------------------------------------------")
     print("\n             You can access the display at:                  ")
     print(f"   Presentation:  http://{ip}:{port}")
@@ -170,7 +173,7 @@ VIEWS = os.path.join(app.root_path, "views")
 @app.after_request
 def private_pages(response):
     if request.path.startswith(("/admin", "/remote")) or request.endpoint in {
-        "api_settings", "omt_settings", "browse", "save_button_config"
+        "api_settings", "omt_settings", "browse", "save_button_config", "live_sources"
     }:
         response.headers["Cache-Control"] = "no-store"
     return response
@@ -217,7 +220,7 @@ def valid_button_config(data):
     return (isinstance(data, dict) and isinstance(data.get("buttons"), list)
             and all(isinstance(b, dict) and isinstance(b.get("enabled"), bool)
                     and isinstance(b.get("label"), str)
-                    and b.get("type") in ("video", "slideshow", "image", "playlist")
+                    and b.get("type") in ("video", "slideshow", "image", "playlist", "live")
                     and isinstance(b.get("src", ""), str) for b in data["buttons"]))
 
 
@@ -245,6 +248,8 @@ def playback_media(media, revision):
         src = result.get("src", "")
         if isinstance(src, str):
             result["seconds"] = slide_seconds.get(folder_key(src), DEFAULT_SLIDE_SECONDS)
+    elif result["type"] == "live":
+        result["live_port"] = LIVE_PORT
     return result
 
 
@@ -277,7 +282,14 @@ def kiosk_ready():
 
 @app.route('/')
 def presentation():
-    # Hauptanzeige für den Präsentationsscreen
+    # Hauptanzeige für den Präsentationsscreen.
+    # Auf dem Server-PC selbst immer über localhost: nur dort ist die Seite ein "sicherer Kontext",
+    # ohne den die Browser kein WebCodecs (H.264-Decoder für den Live-Eingang) und kein AudioWorklet anbieten.
+    # Live-Video geht deshalb nur, wenn die Präsentation auf dem Server-PC läuft.
+    host = (request.host.rsplit(":", 1)[0] if not request.host.startswith("[") else request.host.split("]")[0] + "]").lower()
+    if request.remote_addr in LOCAL_ADDRS and host not in ("localhost", "127.0.0.1", "[::1]"):
+        query = request.query_string.decode("latin-1")
+        return redirect(f"http://localhost:{port}/" + (f"?{query}" if query else ""))
     return app.send_static_file('presentation.html')
 
 def authenticate():
@@ -494,6 +506,140 @@ def restore_omt_when_ready():
 
 
 atexit.register(stop_omt)
+
+# ─── Live input (OMT sources shown by the presentation page, via omt\LiveIn.exe on 127.0.0.1) ──
+LIVE_EXE = os.path.join(OMT_DIR, 'LiveIn.exe')
+# H.264 encoder of the live input: auto = Windows order (hardware first), or a fixed one; a missing one falls back to auto
+LIVE_ENCODERS = {"auto": "Automatic (hardware first)", "intel": "Intel Quick Sync", "nvidia": "NVIDIA NVENC",
+                 "amd": "AMD", "software": "Software (CPU)"}
+live_encoder = preferences.get("live_encoder", "auto")
+if live_encoder not in LIVE_ENCODERS:
+    live_encoder = "auto"
+live_proc = None
+live_status = {"line": "", "message": ""}
+live_lock = threading.Lock()
+live_control = threading.Lock()   # start/stop of LiveIn (watchdog and settings change)
+
+
+def _live_reader(proc):
+    # LiveIn prints "live clients N receivers M dropped D | SOURCE 1920x1080p 50 fps; ..." once per second
+    for line in proc.stdout:
+        line = line.strip()
+        with live_lock:
+            if line.startswith("live clients"):
+                live_status["line"] = line[:500]
+            elif line:
+                live_status["message"] = line[:200]
+    with live_lock:
+        live_status["line"] = ""
+
+
+def live_running():
+    return live_proc is not None and live_proc.poll() is None
+
+
+def stop_live():
+    global live_proc
+    proc = live_proc
+    live_proc = None
+    if proc is not None and proc.poll() is None:
+        proc.terminate()
+        try:
+            proc.wait(timeout=3)
+        except Exception:
+            proc.kill()
+
+
+def start_live():
+    global live_proc
+    if live_running() or not os.path.isfile(LIVE_EXE):
+        return
+    args = [LIVE_EXE, "--port", str(LIVE_PORT), "--kiosk-port", str(port), "--parent-pid", str(os.getpid()),
+            "--encoder", live_encoder]
+    flags = 0x08000000 if os.name == 'nt' else 0   # CREATE_NO_WINDOW
+    live_proc = subprocess.Popen(args, cwd=OMT_DIR, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                 text=True, encoding='utf-8', errors='replace', creationflags=flags)
+    threading.Thread(target=_live_reader, args=(live_proc,), daemon=True).start()
+
+
+def live_watchdog():
+    # LiveIn runs as long as the server; restarted if it ever stops
+    while True:
+        try:
+            with live_control:
+                start_live()
+        except OSError as error:
+            with live_lock:
+                live_status["message"] = str(error)
+        time.sleep(5)
+
+
+atexit.register(stop_live)
+
+
+@app.route('/admin/live-encoder', methods=['GET', 'POST'])
+def live_encoder_setting():
+    # Encoder choice for the live input; saving restarts LiveIn (live pictures pause for a moment)
+    global live_encoder
+    require_admin()
+    if request.method == 'POST':
+        data = request.get_json(silent=True)
+        choice = data.get("encoder") if isinstance(data, dict) else None
+        if choice not in LIVE_ENCODERS:
+            return jsonify(message="Select an encoder."), 400
+        kiosk_preferences.save("live_encoder", choice)
+        with live_control:
+            live_encoder = choice
+            stop_live()
+            try:
+                start_live()
+            except OSError as error:
+                with live_lock:
+                    live_status["message"] = str(error)
+    # list of pairs: jsonify would sort a dict alphabetically ("AMD" before "Automatic")
+    return jsonify(encoder=live_encoder, choices=list(LIVE_ENCODERS.items()))
+
+
+def own_omt_output_name():
+    # The kiosk's own OMT output must not be offered as input (picture loop)
+    return f"{socket.gethostname()} ({OMT_SETTINGS['name']})".lower()
+
+
+@app.get('/live_preview.jpg')
+def live_preview():
+    # Still picture (about 1 per second, 480 px) of the live source on air, for the remote page
+    if not (signed_in() or remote_authorized()):
+        abort(401)
+    media = current_media
+    if media.get("type") != "live" or not media.get("src"):
+        abort(404)
+    url = f"http://127.0.0.1:{LIVE_PORT}/preview?source=" + urllib.parse.quote(media["src"])
+    try:
+        with urllib.request.urlopen(url, timeout=2) as response:
+            data = response.read()
+    except OSError:
+        abort(404)
+    return Response(data, mimetype="image/jpeg", headers={"Cache-Control": "no-store"})
+
+
+@app.get('/live_sources')
+def live_sources():
+    require_admin()
+    # OMT sources as "HOST (Name)", NDI sources as "ndi:HOST (Name)"
+    sources, error, ndi, ndi_status = [], "", False, ""
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{LIVE_PORT}/sources", timeout=2) as response:
+            data = json.load(response)
+        sources = data.get("sources", [])
+        ndi, ndi_status = bool(data.get("ndi")), str(data.get("ndi_status", ""))
+    except (OSError, ValueError) as e:
+        error = "LiveIn.exe not running" if not live_running() else str(e)
+    own = own_omt_output_name()
+    sources = [s for s in sources if isinstance(s, str) and s.lower() != own]
+    with live_lock:
+        status = dict(live_status)
+    return jsonify(sources=sources, error=error, running=live_running(), ndi=ndi, ndi_status=ndi_status,
+                   exe_found=os.path.isfile(LIVE_EXE), status=status)
 
 @app.route('/omt_settings', methods=['GET', 'POST'])
 def omt_settings():
@@ -740,7 +886,7 @@ def on_disconnect(reason=None):
 def handle_show_media(data):
     if not (signed_in() or remote_authorized()):
         return
-    if isinstance(data, dict) and data.get("type") in {"image", "video", "slideshow", "playlist"}:
+    if isinstance(data, dict) and data.get("type") in {"image", "video", "slideshow", "playlist", "live"}:
         switch_media({"type": data["type"], "src": data.get("src", "")})
 
 
@@ -960,6 +1106,7 @@ def run_server():
     threading.Thread(target=refresh_terminal_every_10s, daemon=True).start()
     if OMT_SETTINGS["enabled"]:
         threading.Thread(target=restore_omt_when_ready, daemon=True).start()
+    threading.Thread(target=live_watchdog, daemon=True).start()
     socketio.start_background_task(schedule_thread)
     socketio.run(app, host="0.0.0.0", port=port)
 

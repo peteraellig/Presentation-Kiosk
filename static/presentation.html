@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-  <!-- Kiosk3 3.18 · © Peter Aellig -->
+  <!-- Kiosk3 3.24 · © Peter Aellig -->
   <!-- presentation.html -->
   <!-- change standard display content at the end of this file! -->
 <html lang="de">
@@ -20,7 +20,7 @@
     }
     
     /* picture and video fill the screen (smaller sources, e.g. 720p, are scaled up, aspect ratio kept) */
-    #stage img, #stage video {
+    #stage img, #stage video, #stage canvas {
       display: block;
       width: 100vw;
       height: 100vh;
@@ -34,6 +34,7 @@
   <button id="enableSound" hidden style="position:fixed;bottom:16px;left:16px;cursor:pointer;padding:8px 12px">Ton aktivieren</button>
     <div id="serverIpBadge" style="position: fixed; right: 16px; top: 16px; background: rgba(0,0,0,0.65); color: #fff; font: 14px/1.4 sans-serif; padding: 8px 12px; border-radius: 8px; z-index: 9999; display:none; white-space: pre-line;">
     </div>
+  <script src="/static/live.js"></script>
   <script src="/static/player.js"></script>
   <script>
     // === Einstellungen ===
@@ -83,7 +84,7 @@ socket.on('server_info', (data) => {
 
   if (remainingMs > 0 && data.ip) {
     // IP + verbleibende Zeit (zweite Zeile)
-    ipBadge.textContent = `Kiosk3 3.18 · © Peter Aellig\nServer: ${data.ip}:${data.port}\nIP blendet aus in: ${formatMMSS(remainingMs)}`;
+    ipBadge.textContent = `Kiosk3 3.24 · © Peter Aellig\nServer: ${data.ip}:${data.port}\nIP blendet aus in: ${formatMMSS(remainingMs)}`;
     ipBadge.style.display = 'block';
 
     // Countdown aktualisieren
@@ -95,7 +96,7 @@ socket.on('server_info', (data) => {
         ipBadge.style.display = 'none';
         return;
       }
-      ipBadge.textContent = `Kiosk3 3.18 · © Peter Aellig\nServer-IP: ${data.ip}:${data.port}\nIP blendet aus in: ${formatMMSS(remainingMs)}`;
+      ipBadge.textContent = `Kiosk3 3.24 · © Peter Aellig\nServer-IP: ${data.ip}:${data.port}\nIP blendet aus in: ${formatMMSS(remainingMs)}`;
     }, 250);
 
     // Failsafe: nach Ablauf ausblenden

@@ -1,4 +1,4 @@
-# Kiosk3 3.18 · © Peter Aellig ·
+# Kiosk3 3.24 · © Peter Aellig ·
 # Streamdeck Driver
 # The server supplies the same configured slots used by Remote Control.
 
@@ -18,7 +18,7 @@ STREAMDECK_INPUT_LOCK = True  # Gesperrt beim Start
 
 
 print("\n-------------------------------------------------------------")
-print("\n     Kiosk3 3.18 · © Peter Aellig · Stream Deck           ")
+print("\n     Kiosk3 3.24 · © Peter Aellig · Stream Deck           ")
 print("\n-------------------------------------------------------------")
 
 

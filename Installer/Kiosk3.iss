@@ -2,7 +2,7 @@
 ; The application files are taken from SrcDir (the finished kiosk3 folder).
 
 #define AppName "Kiosk3"
-#define AppVersion "3.18"
+#define AppVersion "3.24"
 #define SrcDir ".."
 
 [Setup]
@@ -49,6 +49,7 @@ Source: "{#SrcDir}\Images\kiosk.ico"; DestDir: "{app}\Images"; Flags: ignorevers
 Source: "{#SrcDir}\static\presentation.html"; DestDir: "{app}\static"; Flags: ignoreversion
 Source: "{#SrcDir}\static\api_help.html"; DestDir: "{app}\static"; Flags: ignoreversion
 Source: "{#SrcDir}\static\player.js"; DestDir: "{app}\static"; Flags: ignoreversion
+Source: "{#SrcDir}\static\live.js"; DestDir: "{app}\static"; Flags: ignoreversion
 Source: "{#SrcDir}\static\socket.io.min.js"; DestDir: "{app}\static"; Flags: ignoreversion
 Source: "{#SrcDir}\static\style.css"; DestDir: "{app}\static"; Flags: ignoreversion
 Source: "{#SrcDir}\views\remote.html"; DestDir: "{app}\views"; Flags: ignoreversion

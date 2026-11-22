@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Kiosk3 3.18 · © Peter Aellig · remote.html -->
+<!-- Kiosk3 3.24 · © Peter Aellig · remote.html -->
 <html lang="de">
 <head>
   <meta charset="UTF-8">
@@ -17,7 +17,7 @@
       <span class="pill" id="pill-screen"><span class="dot"></span>Presentation screen</span>
       <span class="pill" id="pill-omt"><span class="dot"></span>OMT</span>
     </div>
-    <span class="kiosk-brand">Kiosk3 3.18 · © Peter Aellig</span>
+    <span class="kiosk-brand">Kiosk3 3.24 · © Peter Aellig</span>
   </div>
 
 
@@ -121,12 +121,40 @@
     }
   }
 
+  let liveTimer = null;
+
+  // Live source: still picture from the server about once per second (the live video itself only plays on the server PC)
+  function showLivePreview(file) {
+    // "ndi:HOST (Name)" = NDI source, anything else = OMT source
+    const label = /^ndi:/i.test(file) ? 'Live (NDI): ' + file.slice(4) : 'Live (OMT): ' + file;
+    previewDiv.textContent = label;
+    const element = document.createElement('img');
+    element.alt = label;
+    element.title = label + ' – still picture, updated every second';
+    const refresh = () => {
+      const next = new Image();
+      next.onload = () => {
+        element.src = next.src;
+        if (element.parentNode !== previewDiv) previewDiv.replaceChildren(element);
+      };
+      next.src = '/live_preview.jpg?t=' + Date.now();
+    };
+    refresh();
+    liveTimer = setInterval(refresh, 1000);
+  }
+
   function showPreview(media, file, version) {
     const key = JSON.stringify([media?.revision, file, version]);
     if (previewKey === key) return;
     previewKey = key;
+    clearInterval(liveTimer);
+    liveTimer = null;
     if (!media || !file) {
       previewDiv.textContent = 'No preview';
+      return;
+    }
+    if (media.type === 'live') {
+      showLivePreview(file);
       return;
     }
     const video = media.type === 'video' || media.type === 'playlist';
