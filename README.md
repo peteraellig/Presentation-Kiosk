@@ -7,6 +7,8 @@ The LIVE video source has only a few ms additional latency, the encoding (H.264)
 
 ![Kiosk 3.24 remote control with Live PGM on air and a speaker in the live preview](docs/kiosk.png?v=3.24-live)
 
+![Kiosk 3 emergency slide editor](docs/kiosk-editor.png)
+
 ## Download and first start
 
 [Download the standard Windows x64 installer for Kiosk 3.24 (353 MB)](https://github.com/peteraellig/Venue-Alert-EvacScreen/releases/download/v3.24/Kiosk3_Setup_v3.24.exe)
