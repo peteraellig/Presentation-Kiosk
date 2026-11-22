@@ -1,6 +1,6 @@
-# Presentation Kiosk 3.24
+# Venue-Alert EvacScreen 3.24
 
-Presentation Kiosk lets an event operator switch a venue screen between a live-input (OMT & NDI), sponsor loop, an announcement and prepared emergency slides. The remote shows a preview of the current output so the operator can confirm which message is on air. 
+Venue-Alert EvacScreen lets an event operator switch a venue screen between a live-input (OMT & NDI), sponsor loop, an announcement and prepared emergency slides. The remote shows a preview of the current output so the operator can confirm which message is on air. 
 The small image on the Remote Screen is copy of the presentation screen and shows what the audience sees.
 An editor is available for creating emergency slides. You select the necessary languages, specify the source language, and write the slides. DEEPL.COM then automatically translates the remaining slides at the click of a button. All you need is a free DEEPL Developer account and its API key. The editor is installed automatically, and an icon is placed on the desktop.
 The LIVE video source has only a few ms additional latency, the encoding (H.264) of the signal for the browser takes only 3 ms.
@@ -9,11 +9,11 @@ The LIVE video source has only a few ms additional latency, the encoding (H.264)
 
 ## Download and first start
 
-[Download the standard Windows x64 installer for Kiosk 3.18 (353 MB)](https://github.com/peteraellig/Presentation-Kiosk/releases/download/v3.18/Kiosk3_Setup_v3.18.exe)
+[Download the standard Windows x64 installer for Kiosk 3.24 (353 MB)](https://github.com/peteraellig/Venue-Alert-EvacScreen/releases/download/v3.24/Kiosk3_Setup_v3.24.exe)
 
 This release provides the **standard installer**. It includes the kiosk application and example media. On a new PC, leave the dependency and Firefox options selected and connect to the internet during setup. Setup downloads the required components, including Python 3.12, its packages and the runtimes for OMT. After setup, the kiosk can operate on the local event network without internet access.
 
-1. Run `Kiosk3_Setup_v3.18.exe` as administrator on the presentation PC. The default installation folder is `C:\kiosk3`.
+1. Run `Kiosk3_Setup_v3.24.exe` as administrator on the presentation PC. The default installation folder is `C:\kiosk3`.
    To edit emergency slides on this PC, select the **emergency board editor** and install the .NET 10 Desktop Runtime. With the editor and desktop icons selected, Setup creates two shortcuts: **Kiosk 3 Start** and **Kiosk 3 Board Editor**.
 2. Launch **Kiosk 3 Start**. Firefox opens the presentation full screen. A Chrome launcher is also available for PCs with Chrome installed.
 3. On the kiosk PC, open **http://localhost:53101/admin**. Set the initial admin password, sign in and set a remote-control password before connecting operators.
@@ -44,6 +44,6 @@ Stream Deck input starts locked. Enable it in Admin or press the four corner key
 
 The Python server, launcher, Stream Deck driver, web interfaces, C# emergency board editor and Inno Setup definition are included here. The source checkout includes sample media. The standard installer includes additional videos. To rebuild with the same media, copy the installed MP4 files to the corresponding source folders and compile [Installer/Kiosk3.iss](Installer/Kiosk3.iss) with Inno Setup 7.
 
-The [archived 1.4.x manuals](https://github.com/peteraellig/Presentation-Kiosk/tree/57cd1a60663b1801028799fdd63ad99e0038df7b/Manual) document the previous version.
+The [archived 1.4.x manuals](https://github.com/peteraellig/Venue-Alert-EvacScreen/tree/57cd1a60663b1801028799fdd63ad99e0038df7b/Manual) document the previous version.
 
 Project code is distributed under the [0BSD license](LICENSE). See the [third-party notices](licence/THIRD-PARTY-NOTICES.txt) for OMT.
