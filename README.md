@@ -1,6 +1,6 @@
-# Presentation Kiosk 3.18
+# Presentation Kiosk 3.24
 
-Presentation Kiosk lets an event operator switch a venue screen between a sponsor loop, an announcement and prepared emergency slides. The remote shows a preview of the current output so the operator can confirm which message is on air. 
+Presentation Kiosk lets an event operator switch a venue screen between a live-input (OMT & NDI), sponsor loop, an announcement and prepared emergency slides. The remote shows a preview of the current output so the operator can confirm which message is on air. 
 The small image on the Remote Screen is copy of the presentation screen and shows what the audience sees.
 An editor is available for creating emergency slides. You select the necessary languages, specify the source language, and write the slides. DEEPL.COM then automatically translates the remaining slides at the click of a button. All you need is a free DEEPL Developer account and its API key. The editor is installed automatically, and an icon is placed on the desktop.
 You can also add an OMT source as a LIVE video. There is no additional latency, the encoding (H.264) of the signal for the browser takes only 3 ms.
@@ -27,7 +27,7 @@ This release provides the **standard installer**. It includes the kiosk applicat
 | --- | --- |
 | Presentation · `/` | Full-screen output for the venue display. An optional OMT output can be configured in Admin. |
 | Remote · `/remote` | Select an enabled program and check the on-air preview. Red buttons ask for a second tap. |
-| Admin · `/admin` | Configure buttons, remote credentials, slideshow timing, the nightly reset, Stream Deck input and API access. |
+| Admin · `/admin` | Configure buttons, remote credentials, slideshow timing, sources, the nightly reset, Stream Deck input and API access. |
 | API help · `/static/api_help.html` | View commands such as `/api?Function=bild1` and their media assignments. Configure the API switch and permitted addresses in Admin. |
 
 A first installation includes prepared emergency slides in **bild1–bild8**. **bild9** and **bild10** are free slots for your own slides. Updating preserves existing emergency slides. Use **Kiosk 3 Board Editor** to prepare and export slides.
@@ -35,6 +35,8 @@ A first installation includes prepared emergency slides in **bild1–bild8**. **
 The installer includes four directly selectable videos (`video1.mp4` through `video4.mp4`) and two playlist clips (`AMB.mp4` and `go1080p25.mp4`).
 
 Place videos in `static/videos`, playlist clips in `static/videos_playlist` and slideshow images in folders such as `static/bild1`. In **Admin → Slideshow timing**, each folder has one duration from **1 to 10 seconds per image** (default 3). Remote, Stream Deck and API selections use that same timing. A single image stays on screen.
+
+Select **LIVE** as source, and then use the “source” option to choose one of the available OMT or NDI sources that appear. If no sources appear, it may be due to firewall settings, or there may be no IT video source available on the current network. For live use, an INTEL or NVIDIA graphics card is required, Intel CPU integrated graphics also work well. It also works with software encoders, but that requires a very powerful computer. We do not recommend software encoding. The live display latency is less than one frame.
 
 Stream Deck input starts locked. Enable it in Admin or press the four corner keys together, then release them before repeating. On the Stream Deck Original, three corner keys can register as four and toggle the lock.
 
