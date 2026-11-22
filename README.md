@@ -5,7 +5,7 @@ The small image on the Remote Screen is copy of the presentation screen and show
 An editor is available for creating emergency slides. You select the necessary languages, specify the source language, and write the slides. DEEPL.COM then automatically translates the remaining slides at the click of a button. All you need is a free DEEPL Developer account and its API key. The editor is installed automatically, and an icon is placed on the desktop.
 The LIVE video source has only a few ms additional latency, the encoding (H.264) of the signal for the browser takes only 3 ms.
 
-![Kiosk 3 remote control with Evacuation on air and the active English evacuation slide visible below the program buttons](docs/kiosk.png)
+![Kiosk 3.24 remote control with Live PGM on air and a speaker in the live preview](docs/kiosk.png?v=3.24-live)
 
 ## Download and first start
 
